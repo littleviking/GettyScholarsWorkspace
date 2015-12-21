@@ -1,0 +1,565 @@
+<?php
+/**
+ * @file
+ * Code for the Project Dashboard feature.
+ */
+
+include_once 'project_dashboard.features.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function project_dashboard_menu() {
+  $items['dashboard'] = array(
+    'title' => '',
+    'page callback' => 'project_dashboard_show_dashboard',
+    'page arguments' => array(),
+    'access callback' => TRUE,
+  );
+
+  $items['project/%'] = array(
+    'title' => '',
+    'page callback' => 'project_dashboard_show_dashboard',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_init().
+ */
+function project_dashboard_init() {
+  libraries_load('flexslider');
+  drupal_add_js(drupal_get_path('module', 'project_dashboard') . '/project-dashboard.js');
+  drupal_add_css(drupal_get_path('module', 'project_dashboard') . '/project-dashboard.css');
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function project_dashboard_menu_alter(&$items) {
+  $items['project/%/search/%']['title arguments'][0] = 'Search Results';
+  $items['project/%/search/%']['title callback'] = 'project_dashboard_page_title_callback';
+  $items['node/%node/translate']['page callback'] = 'project_dashboard_node_overview';
+}
+
+function project_dashboard_page_title_callback($title) {
+  $gid = arg(1);
+  $group = node_load($gid);
+
+  return $group->title . ' ' . $title;
+}
+
+/**
+ * Implements hook_theme_registry_alter
+ */
+function project_dashboard_theme_registry_alter(&$theme_registry) {
+  $mod_path = drupal_get_path('module', 'project_dashboard');
+  $theme_registry_copy = $theme_registry;       // munge on a copy
+  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $mod_path);
+  $theme_registry += array_diff_key($theme_registry_copy, $theme_registry);
+  
+  // Register this module for the search results templates.
+  $theme_registry['search_results']['template'] = $mod_path . '/templates/search-results';
+  $theme_registry['search_results']['theme path'] = $mod_path;
+
+  $theme_registry['search_result']['template'] = $mod_path . '/templates/search-result';
+  $theme_registry['search_result']['theme path'] = $mod_path;
+}
+
+/**
+ * Implements hook_user_login().
+ */
+function project_dashboard_user_login(&$edit, $account) {
+  $edit['redirect'] = 'dashboard';
+}
+
+function project_dashboard_block_info() {
+  $blocks['my_projects'] = array(
+    'info' => t('My Projects'),
+  );
+  $blocks['project_menu'] = array(
+    'info' => t('Project Menu'),
+  );
+  $blocks['create_content'] = array(
+    'info' => t('Create Project Content'),
+  );
+  $blocks['project_search'] = array(
+    'info' => t('Search Project Content form'),
+  );
+  $blocks['current_project'] = array(
+    'info' => t('Current Project'),
+  );
+  $blocks['project_tools'] = array(
+    'info' => t('Project Tools'),
+  );
+  $blocks['project_toolbar'] = array(
+    'info' => t('Project Toolbar'),
+  );
+  $blocks['project_dashboard_logo'] = array(
+    'info' => t('Project Dashboard Logo'),
+    );
+  return $blocks;
+}
+
+function project_dashboard_block_view($delta) {
+  $block = array();
+  switch ($delta) {
+    case 'my_projects':
+      $block = project_dashboard_get_my_projects();
+      break;
+    case 'current_project':
+      $block = project_dashboard_get_current_project();
+      break;
+    case 'project_toolbar':
+      $block = project_dashboard_get_project_toolbar();
+      break;
+    case 'project_search':
+      //$block = project_dashboard_get_project_search();
+      break;
+  }
+  return $block;
+}
+
+function project_dashboard_get_my_projects() {
+  $block['content'] = views_embed_view('og_user_projects', 'default');
+  return $block;
+}
+
+function project_dashboard_get_project_toolbar() {
+    $gid = project_dashboard_get_group();
+    $block = array('content' => '');
+
+    if ($gid) {
+        $group = node_load($gid);
+        $projectLink = $group->title;
+    }
+    else {
+        $projectLink = 'Select Project';
+    }
+    $block['content'] = '<div id="dashboard-toolbar"> <div id="my-projects"><a id="my-projects-link" class="dashboard-link">'.$projectLink.' <div class="project-arrow"></div></a><div id="my-projects-submenu" class="dashboard-submenu">';
+    // Create array of all groups for this user
+    $projects = array();
+    $entity_groups = og_get_entity_groups();
+
+    if (isset($entity_groups['node']) && count($entity_groups['node'])) {
+        $projects = node_load_multiple(array_values($entity_groups['node']));
+
+        // set "is_last" attribute to last item in array
+        end($projects);
+        $projects[key($projects)]->is_last = 1;
+    }
+
+    // Loop thru and create links
+    foreach($projects as $project) {
+        $block['content'] .= '<div class="dashboard-submenu-link">' . l($project->title, 'project/' . $project->nid) . '</div>';
+    }
+    $block['content'] .= '</div></div><div id="manage-members"><div class="dashboard-link">';
+
+    // Get current NID
+    if ($gid = project_dashboard_get_group()) {
+      if (og_user_access('node', $gid, 'administer group')) {
+        $block['content'] .= l(t('Manage Members'), 'node/' . $gid . '/group');
+      }
+    }
+
+    $project_path = variable_get('getty_expose_project_service_url', 'service/projects');
+    $project_download = '';
+    $user_access = _getty_expose_project_access_handler();
+
+    //only add the download link if the path is active
+    if (!empty($project_path) && $user_access) {
+        //creates the path
+        $download_link = l('Download Project', $project_path . '/xml', array(
+            'query' => array(
+                'download' => TRUE,
+                'project' => $gid,
+            )
+        ));
+
+        //creates wrapper for the link
+        $project_download = theme('html_tag', array(
+            'element' => array(
+                '#tag' => 'div',
+                '#value' => $download_link,
+                '#attributes' => array(
+                    'class' => 'dashboard-link',
+                ))));
+    }
+
+    if ($gid) {
+        $block['content'] .= '</div></div><div class="dashboard-link" id="forum-link">' . l(t('Forum'), 'project/' . $gid . '/forums') . '</div>' . $project_download . '</div>';
+    }
+    else {
+        $block['content'] .= '';
+    }
+    return $block;
+}
+
+function project_dashboard_get_current_project() {
+    $gid = project_dashboard_get_group();
+    $block = array('content' => '');
+
+    if ($gid) {
+        global $user;
+        // Get group title
+        $g = node_load($gid);
+        $base_url = base_path();
+        //$title = $g->title;
+        if (isset($g->body['und'])) {
+            $block['content'] .= '
+                <div class="new-project-desc">
+                    <div class="project-desc-title">
+                        ' . l($g->title, 'project/' . $gid) . '
+                    </div>
+                    <div class="project-desc">
+                        ' . $g->body['und'][0]['value'] . '
+                    </div>
+                </div>
+            ';
+        }
+        else {
+            $block['content'] .= '';
+        }
+
+        drupal_add_js(drupal_get_path('module', 'project_dashboard') . '/jquery.expander.min.js');
+
+        /**
+         * Get the image for this project and display it here, bypassing the view, and block that spits out into the content region
+         *
+         */
+        //$block['content'] .= '<pre>'.print_r($g, true).'</pre>';  $img_url = file_create_url($g->field_image["und"][0]["uri"]);
+        //$block['content'] .= '<pre>'.print_r($g->field_image["und"][0]["uri"], true).'</pre>';
+        if ( !empty($g->field_image["und"]) && !empty($g->field_image["und"][0]["uri"]) ) {
+            $image = theme('image_style', array(
+              'style_name' => 'project_dashboard_header',
+              'path' => $g->field_image["und"][0]["uri"],
+              'attributes' => array('class' => 'project-header-image'),
+            ));
+
+            $block['content'] .= '<div class="new-project-image">';
+            $block['content'] .= $image;
+            $block['content'] .= '</div>';
+        }
+        else {
+            $block['content'] .= '<div class="new-project-image">';
+            $block['content'] .= 'Please set an image for this project.';
+            $block['content'] .= '</div>';
+        }
+
+        /**
+         * Show the project menu links
+         *
+         */
+
+        $block['content'] .= '
+        <ul class="project-tools-list">
+          <li><a class="tool-bib" href="' . url("project/$gid/bibliography") . '">Bibliography</a></li>
+          <li><a class="tool-comp" href="' . url("project/$gid/comparisons") . '">Comparison</a></li>
+          <li><a class="tool-ess" href="' . url("project/$gid/essays") . '">Essay</a></li>
+          <li><a class="tool-img" href="' . url("project/$gid/images") . '">Image</a></li>
+          <li><a class="tool-time" href="' . url("project/$gid/timeline") . '">Timeline</a></li>
+          <li><a class="tool-trans" href="' . url("project/$gid/transcriptions") . '">Transcription</a></li>
+        </ul>
+      ';
+    }
+
+    $searchForm = drupal_get_form('project_dashboard_project_search_form');
+    $block['content'] .= '<div class="project-db-search">';
+    $block['content'] .= drupal_render($searchForm);
+    $block['content'] .= '</div>';
+  return $block;
+}
+
+/**
+ * Get group id based on URL
+ */
+function project_dashboard_get_group() {
+  $url = request_path();
+  $url_piece = explode("/", $url);
+
+  $group_pattern = '/^node\/[0-9]+\/group/';
+  $project_pattern = '/^project\/[0-9]+/';
+  $forum_pattern = '/^forum\/[0-9]+/';
+  $forum_add_pattern = '/^node\/add\/forum\/[0-9]+\/[0-9]+/';
+  $node_pattern = '/^node\/[0-9]+/';
+  $gid = FALSE;
+  
+  if (preg_match($group_pattern, $url) || preg_match($project_pattern, $url)) {
+    $gid = $url_piece[1];
+  }
+  elseif (preg_match($forum_pattern, $url)) {
+    $f = forum_forum_load($url_piece[1]);
+    $gid = $f->og_group_ref['und'][0]['target_id'];
+  }
+  elseif (preg_match($forum_add_pattern, $url)) {
+    $gid = $url_piece[3];
+  }
+  elseif (preg_match($node_pattern, $url)) {
+    $n = node_load($url_piece[1]);
+    if (isset($n->og_group_ref['und'])) {
+      $gid = $n->og_group_ref['und'][0]['target_id'];
+    }
+  }
+  elseif (is_numeric($url_piece[count($url_piece) - 1])) {
+    $gid = $url_piece[count($url_piece) - 1];
+  }
+
+  return $gid;
+}
+
+function project_dashboard_get_project_search() {
+  $block['content'] = drupal_get_form('project_dashboard_project_search_form'); //'here is where my search block goes';
+  return $block;
+}
+
+function project_dashboard_project_search_form() {
+  $form = array();
+
+  $form['text'] = array(
+    '#type' => 'textfield',
+    '#attributes' => array(
+      'placeholder' => t('Search'),
+    ),
+  );
+
+  $form['project_search_submit'] = array(
+    '#type' => 'image_button',
+    '#src' => drupal_get_path('module', 'project_dashboard') . '/images/search.png',
+  );
+
+  return $form;
+}
+
+/**
+ * Redirect to apache solr page
+ */
+function project_dashboard_project_search_form_submit($form, &$form_state) {
+  $search_value = check_plain($form_state['values']['text']);
+  $gid = project_dashboard_get_group();
+  if ($gid) {
+    drupal_goto('project/' . $gid . '/search', array('query' => array('keys' => $search_value)));
+  }
+}
+
+function project_dashboard_theme() {
+  return array(
+    'project_dashboard_main' => array(
+      'template' => 'templates/dashboard-main',
+      'variables' => array('header' => NULL, 'dashboard_main' => NULL, 'dashboard_recent' => NULL, 'title' => t('Dashboard'), 'description' => NULL),
+    ),
+  );
+}
+
+function project_dashboard_show_dashboard($gid = NULL) {
+  global $user;
+  
+  if ($user->uid == 0) {
+    drupal_goto('user');
+  }
+  else {
+    if (isset($gid) && !og_is_member('node', $gid)) {
+      drupal_goto('dashboard');
+    }
+    else {
+      return project_dashboard_display($gid);
+    }
+  }
+}
+
+/**
+ * Returns display for dashboard. If a group ID is specified, return content
+ * only for that project; otherwise, all content for the logged-in user's groups
+ * will be returned.
+ */
+function project_dashboard_display($gid = NULL) {
+  // Get either generic dashboard or project-specific dashboard if group id is
+  // present.
+  if ($gid) {
+    global $user;
+    // Get group title
+    $g = node_load($gid);
+    $title = $g->title;
+    if (isset($g->body['und'])) {
+      $description = $g->body['und'][0]['value'];
+    }
+    else {
+      $description = '';
+    }
+    
+    drupal_add_js(drupal_get_path('module', 'project_dashboard') . '/jquery.expander.min.js');
+
+
+    // Load views for this particular project
+    $dashboard_main = views_embed_view('dashboard', 'block_my_content_project', $user->uid, $gid);
+    $dashboard_recent = views_embed_view('dashboard', 'block_recently_updated_project', $gid);
+  }
+  else {
+    $title = 'Dashboard';
+    $dashboard_main = views_embed_view('dashboard', 'block_my_content');
+    $dashboard_recent = views_embed_view('dashboard', 'block_recently_updated');
+    $description = '';
+  }
+
+  return theme('project_dashboard_main', array('dashboard_main' => $dashboard_main, 'dashboard_recent' => $dashboard_recent, 'title' => $title, 'description' => $description));
+}
+
+function _project_dashboard_get_project() {
+  // If current_project is not set, make it be the first of this user's projects
+  if (!isset($_SESSION['current_project'])) {
+    $groups = og_get_entity_groups();
+    if (isset($groups['node']) && count($groups['node'])) {
+      $_SESSION['current_project'] = current($groups['node']);
+    }
+  }
+
+  if (isset($_SESSION['current_project'])) {
+    return $_SESSION['current_project'];
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORMNAME_alter(). 
+ * Changes submit button to use search image.
+ */
+function project_dashboard_form_search_block_form_alter(&$form, &$form_state) {
+  $form['actions']['submit']['#type'] = 'image_button';
+  $form['actions']['submit']['#src'] = drupal_get_path('module', 'project_dashboard') . '/images/search.png';
+}
+
+/**
+ * Implements hook_form_alter().
+ * Checks if group_id is specified for node forms, and if so, sets it as default
+ * and also adds cancel button which goes to project's main dashboard.
+ */
+function project_dashboard_form_alter(&$form, &$form_state, $form_id) {
+  // Check for any node form for entities that are associated with groups
+  if (strpos($form_id, '_node_form') !== FALSE && isset($form['og_group_ref']['und'][0]['default'])) {
+    // Check if a valid default $gid is passed in
+    $gid = arg(3);
+    if (is_numeric($gid) && og_is_member('node', $gid)) {
+      $form['og_group_ref']['und'][0]['default']['#default_value'] = $gid;
+
+      // Add cancel button
+      $form['actions']['cancel'] = array(
+      '#markup' => l(t('Cancel'), 'project/' . $gid),
+      '#weight' => 20, 
+    );
+    }
+  }
+}
+
+/**
+ * Note: This is mainly an override of translation_node_overview. The only
+ * modification is adding the gid in the link.
+ * 
+ * Page callback: Displays a list of a node's translations.
+ *
+ * @param $node
+ *   A node object.
+ *
+ * @return
+ *   A render array for a page containing a list of content.
+ *
+ * @see translation_menu()
+ */
+function project_dashboard_node_overview($node) {
+  include_once DRUPAL_ROOT . '/includes/language.inc';
+
+  if ($node->tnid) {
+    // Already part of a set, grab that set.
+    $tnid = $node->tnid;
+    $translations = translation_node_get_translations($node->tnid);
+  }
+  else {
+    // We have no translation source nid, this could be a new set, emulate that.
+    $tnid = $node->nid;
+    $translations = array(entity_language('node', $node) => $node);
+  }
+
+  $type = variable_get('translation_language_type', LANGUAGE_TYPE_INTERFACE);
+  $header = array(t('Language'), t('Title'), t('Status'), t('Operations'));
+
+  foreach (language_list() as $langcode => $language) {
+    $options = array();
+    $language_name = $language->name;
+    if (isset($translations[$langcode])) {
+      // Existing translation in the translation set: display status.
+      // We load the full node to check whether the user can edit it.
+      $translation_node = node_load($translations[$langcode]->nid);
+      $path = 'node/' . $translation_node->nid;
+      $links = language_negotiation_get_switch_links($type, $path);
+      $title = empty($links->links[$langcode]['href']) ? l($translation_node->title, $path) : l($translation_node->title, $links->links[$langcode]['href'], $links->links[$langcode]);
+      if (node_access('update', $translation_node)) {
+        $text = t('edit');
+        $path = 'node/' . $translation_node->nid . '/edit';
+        $links = language_negotiation_get_switch_links($type, $path);
+        $options[] = empty($links->links[$langcode]['href']) ? l($text, $path) : l($text, $links->links[$langcode]['href'], $links->links[$langcode]);
+      }
+      $status = $translation_node->status ? t('Published') : t('Not published');
+      $status .= $translation_node->translate ? ' - <span class="marker">' . t('outdated') . '</span>' : '';
+      if ($translation_node->nid == $tnid) {
+        $language_name = t('<strong>@language_name</strong> (source)', array('@language_name' => $language_name));
+      }
+    }
+    else {
+      // No such translation in the set yet: help user to create it.
+      $title = t('n/a');
+      if (node_access('create', $node)) {
+        $gid = $node->og_group_ref['und'][0]['target_id'];
+        $text = t('add translation');
+        $path = 'node/add/' . str_replace('_', '-', $node->type) . '/' . $gid;
+        $links = language_negotiation_get_switch_links($type, $path);
+        $query = array('query' => array('translation' => $node->nid, 'target' => $langcode));
+        $options[] = empty($links->links[$langcode]['href']) ? l($text, $path, $query) : l($text, $links->links[$langcode]['href'], array_merge_recursive($links->links[$langcode], $query));
+      }
+      $status = t('Not translated');
+    }
+    $rows[] = array($language_name, $title, $status, implode(" | ", $options));
+  }
+
+  drupal_set_title(t('Translations of %title', array('%title' => $node->title)), PASS_THROUGH);
+
+  $build['translation_node_overview'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+  );
+
+  return $build;
+}
+
+/**
+ * Implements hook_preprocess().
+ */
+function project_dashboard_preprocess_views_view(&$vars) {
+  if ($vars['name'] == 'og_user_projects' && $vars['display_id'] == 'default') {
+    if (node_access('create', 'project')) {
+      $vars['empty'] = '
+        <ul style="list-style: none;">
+          <li class="views-row">
+            <div class="views-field-title">
+              ' . l(t('Add project'), 'node/add/project') . '
+            </div>
+          </li>
+        </ul>
+      ';
+    }
+    else {
+      $vars['empty'] = '
+        <ul style="list-style: none;">
+          <li>
+            <div>
+              ' .t('You are not a member of any projects. Contact a group admin and ask to be added to a group.') . '
+            </div>
+          </li>
+        </ul>
+      ';
+    }
+  }
+}

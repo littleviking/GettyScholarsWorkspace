@@ -1,0 +1,304 @@
+<?php
+/**
+ * @file
+ * Code for the Bibliography Support feature.
+ */
+
+include_once 'bibliography_support.features.inc';
+
+DEFINE('GETTY_BIBLIO_MENU', 'admin/config/getty-biblio');
+
+/**
+ * Implements hook_init().
+ */
+function bibliography_support_init() {
+  //silently include once. issue with loading it through module load
+  @include_once(drupal_get_path('module', 'bibliography_support') . '/libraries/ARC2/arc/ARC2.php');
+  @include_once(drupal_get_path('module', 'bibliography_support') . '/libraries/LibRIS/RISReader.php');
+  @include_once(drupal_get_path('module', 'bibliography_support') . '/libraries/querypath/src/qp.php');
+}
+
+/**
+ *  Implements hook_menu().
+ */
+function bibliography_support_menu() {
+  $items = array();
+  //main group menu
+  $items[GETTY_BIBLIO_MENU] = array(
+    'title' => t('Getty - Biblio Configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bibliography_support_admin_form'),
+    'file' => 'bibliography_support.admin_form.inc',
+    'file path' => drupal_get_path('module', 'bibliography_support') . '/forms',
+    'access arguments' => array('administer site configuration'),
+  );
+  
+  $items[GETTY_BIBLIO_MENU . '/config'] = $items[GETTY_BIBLIO_MENU];
+  $items[GETTY_BIBLIO_MENU . '/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
+
+  //defines an ris configuration screen
+  $items[GETTY_BIBLIO_MENU . '/ris'] = array(
+    'title' => t('RIS Configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bibliography_support_ris_admin_form'),
+    'file' => 'bibliography_support.ris_form.inc',
+    'file path' => drupal_get_path('module', 'bibliography_support') . '/forms',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  //defines a rdf configuration screen
+  $items[GETTY_BIBLIO_MENU . '/rdf'] = array(
+    'title' => t('RDF Configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bibliography_support_rdf_admin_form'),
+    'file' => 'bibliography_support.rdf_form.inc',
+    'file path' => drupal_get_path('module', 'bibliography_support') . '/forms',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  //provides a download functionality for ris
+  $items['node/%node/biblio-ris'] = array(
+    'title' => t('Download RIS'),
+    'page callback' => '_biblio_support_download_file',
+    'page arguments' => array(1, 'ris'),
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => '_bibliography_support_access_handler',
+    'access arguments' => array(1),  
+  );
+
+  //provides a download functionality for rdf
+  $items['node/%node/biblio-rdf'] = array(
+    'title' => t('Download RDF'),
+    'page callback' => '_biblio_support_download_file',
+    'page arguments' => array(1, 'rdf'),
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => '_bibliography_support_access_handler',
+    'access arguments' => array(1),   
+  );
+  
+  return $items;
+}
+
+/**
+ *  @function:
+ *    custom access callback that checks if content type is 
+ */
+function _bibliography_support_access_handler($node) {
+  //ensures that the node type is set
+  if (isset($node->type)) {
+    //returns if its true
+    return $node->type == 'bibliography' && user_access('access ris_rdf download'); 
+  }
+  
+  return false;
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function bibliography_support_permission() {
+  return array(
+    //allows users to download the files
+    'access ris_rdf download' => array(
+      'title' => t('Access Biblio RIS/RDF download files'),
+      'description' => t('Allow users to download RIS/RDF files from the node')
+    )
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function bibliography_support_form_feeds_import_form_alter(&$form, $form_state) {
+  $form['#validate'][] = '_bibliography_support_add_project';
+}
+
+function _bibliography_support_add_project($form, &$form_state) {
+  if (!empty($form_state['values']['feeds']) && !empty($form_state['values']['feeds']['FeedsFileFetcher']) && arg(2)) {
+    $form_state['values']['feeds']['FeedsFileFetcher']['_sw_project'] = arg(2);
+  }
+}
+
+/**
+ * Implements hook_feeds_presave().
+ */
+function bibliography_support_feeds_presave(FeedsSource $source, $entity, $item) {
+  $config = $source->getConfig();
+  if (!empty($config['FeedsFileFetcher']) && !empty($config['FeedsFileFetcher']['_sw_project'])) {
+    $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $config['FeedsFileFetcher']['_sw_project'];
+  }
+}
+
+/**
+ *  @function:
+ *    This page call back is to provide the node the ability to download file based on request
+ */
+function _biblio_support_download_file($node, $type = '') {
+  //checks if this is the correct type otherwise go to a 404
+  if ($node->type == 'bibliography') {
+    //declares the type to download
+    drupal_add_http_header('Content-Type', 'text/csv; utf-8');
+    drupal_add_http_header('Content-Disposition', 'attachment; filename = ' . $node->nid . '_' . $type . '.' . $type);
+    
+    //switch object type based on requested type
+    switch ($type) {
+      case 'ris':
+        $var = new getty_biblio_ris();
+        break;
+      case 'rdf':
+        $var = new getty_biblio_rdf(); 
+        break;
+    }
+    
+    //calls method since both inherit from parent
+    $var->add_biblio_nid($node->nid);
+    $var->get_biblio();
+    $var->convert();
+    
+    //print the content out
+    print $var->output;
+    
+    drupal_exit();
+  }
+  
+  //by default go to 404
+  drupal_not_found();
+}
+
+/**
+ *  Implements hook_feeds_plugins().
+ */
+function bibliography_support_feeds_plugins() {
+  $info = array();
+  $info['getty_bib_parser'] = array(
+    'name' => 'Getty Biblio - Parser', 
+    'description' => 'Biblio Parser', 
+    'handler' => array(
+      'parent' => 'FeedsParser', 
+      'class' => 'getty_bib_parser', 
+      'file' => 'getty_bib_parser.class.php', 
+      'path' => drupal_get_path('module', 'bibliography_support') . '/classes/feeds',
+    ),
+  );
+  return $info;
+}
+
+/**
+ *  Implements hook_feeds_after_save().
+ */
+function bibliography_support_feeds_after_save(FeedsSource $source, $entity, $item, $entity_id) {
+  $data = $source->importer();
+  
+  //only do this for this feeds
+  if (isset($data->id) && $data->id == 'bibliography') {
+    //loads the node
+    $node = node_load($entity->nid);
+    $extra = $item;
+    
+    //TODO: Separate RDF AND RIS
+    switch ($item['_import_type']) {
+      case 'rdf':
+        //declares the ris and grabs the data to start
+        $bib = new getty_biblio_rdf();
+        $available = $bib->get_rdf_list('rdf_term');
+        break;
+      default:
+        //declares the ris and grabs the data to start
+        $bib = new getty_biblio_ris();
+        $available = $bib->get_ris_list('ris_term');
+        break;
+    }
+    
+    //unsets the one that already been saved into the db
+    foreach ($available as $key => $value) {
+      unset($extra[$value]);
+    }
+    //unset the one added in from the parser
+    unset($extra['_import_type']);
+    
+    //adds each additional extra value into the field collection
+    foreach ($extra as $key => $value) {
+      //create and set the host
+      $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_biblio_extra_data'));
+      $field_collection_item->setHostEntity('node', $node);
+    
+      //create and attach the data to the values
+      $fc_wrapper = entity_metadata_wrapper('field_collection_item', $field_collection_item);
+      $fc_wrapper->field_biblio_extra_key->set(trim($key));
+      $fc_wrapper->field_biblio_extra_value->set(trim($value));
+      
+      //save data
+      $field_collection_item->save();   
+    }
+  }
+}
+
+/**
+ *  @function:
+ *    This function provides to forms and classes the fields available by the global configuration.
+ */
+function _getty_bibliography_support_available_fields($exclude = FALSE) {
+  //variables
+  $available_fields = array();
+  $fields = field_info_instances("node", "bibliography");
+  $extra_fields = field_info_extra_fields('node', 'bibliography', 'form');
+
+  //adds the extra fields
+  foreach ($extra_fields as $field => $values) {
+    $available_fields[] = $field;
+  }
+  
+  //does for each of the biblio field
+  foreach ($fields as $field => $values) {
+    $available_fields[] = $field;
+  }
+  
+  //excludes non-field_ keys
+  if ($exclude) {
+    foreach ($available_fields as $field => $value) {
+      if (stripos($value, 'field_') === FALSE) {
+        unset($available_fields[$field]);
+      }
+    }
+  }
+  
+  //returns the available fields from the content type
+  return $available_fields;
+}
+
+/**
+ *  @todo: this is not in use as it was redesigned with views for easy control
+ */
+function _bibliography_support_node_bib_handler($nid) {
+  //variables
+  $output = '';
+  
+  //check if nid is numeric
+  if (is_numeric($nid)) {
+    $node = node_load($nid);
+    
+    //only continue if node is an object
+    if (is_object($node) && $node->type == 'bibliography') {
+      $fields = _getty_bibliography_support_available_fields(TRUE);
+      $obj = new getty_biblio();
+      foreach ($fields as $key => $field) {
+        if (isset($node->$field) && !empty($node->$field)) {
+          $raw_value = field_get_items('node', $node, $field);
+          $value = $obj->field_value_handler($raw_value, $field);
+        }
+      }
+    }
+  }
+  
+  return $output;
+}
+
+/**
+ * Implements hook_batch_alter().
+ */
+function bibliography_support_batch_alter(&$batch) {
+  $batch['destination'] = $batch['source_url'];
+}
+

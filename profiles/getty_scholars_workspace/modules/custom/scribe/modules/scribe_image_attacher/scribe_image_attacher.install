@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function scribe_image_attacher_schema() {
+  $schema['scribe_image_metadata'] = array(
+    'description' => 'Stores metadata for image annotations.',
+    'fields' => array(
+      'attachment_id' => array(
+        'description' => 'The ID of of the attachment to which the annotation is associated.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'annotorious_schema_version' => array(
+        'description' => 'Schema Version of Annotorious being used, by default v0.3.',
+        'type' => 'varchar',
+        'length' => 12,
+        'default' => 'v0.3',
+        'not null' => TRUE,
+      ),
+      'uri' => array(
+        'description' => 'URI of annotated image.',
+        'type' => 'varchar',
+        'length' => 2048,
+        'not null' => FALSE,
+        'sortable' => TRUE
+      ),
+      'src' => array(
+        'description' => 'src property of annotated image.',
+        'type' => 'varchar',
+        'length' => 2048,
+        'not null' => FALSE,
+        'sortable' => TRUE
+      ),
+      'shape_type' => array(
+        'description' => 'Shape type.',
+        'type' => 'varchar',
+        'length' => 12,
+        'default' => 'rect',
+        'not null' => TRUE,
+      ),
+      'shapes' => array(
+        'description' => 'Shape covered by the annotation.',
+        'type' => 'blob',
+        'not null' => TRUE,
+        'size' => 'big',
+        'serialize' => TRUE,
+      ),
+    ),
+  );
+  return $schema;
+}

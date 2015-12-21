@@ -1,0 +1,7 @@
+name = Crop Zoom
+description = "Implementation of CropZoom tool (http://www.cropzoom.com.ar)"
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = jquery_update
+dependencies[] = og

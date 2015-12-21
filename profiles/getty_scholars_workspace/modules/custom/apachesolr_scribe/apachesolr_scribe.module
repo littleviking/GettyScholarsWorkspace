@@ -1,0 +1,240 @@
+<?php
+/**
+ * hook_apachesolr_entity_info_alter
+ *
+ */
+function apachesolr_scribe_apachesolr_entity_info_alter(&$entity_info) {
+  $entity_info['scribe_attachment']['indexable'] = TRUE;
+  $entity_info['scribe_attachment']['status callback'][] = 'apachesolr_scribe_status_callback';
+  $entity_info['scribe_attachment']['document callback'][] = 'apachesolr_scribe_solr_document_scribe';
+  $entity_info['scribe_attachment']['reindex callback'] = 'apachesolr_scribe_solr_reindex_scribe';
+  $entity_info['scribe_attachment']['index_table'] = 'apachesolr_index_entities_scribe';
+}
+
+
+/**
+ * Status callback for ApacheSolr, for scribe
+ */
+function apachesolr_scribe_status_callback($profile2, $type) {
+  return true;
+}
+
+/**
+ * Builds the scribe-specific information for a Solr document.
+ *
+ * @param Apache_Solr_Document $document
+ *   The Solr document we are building up.
+ * @param stdClass $entity
+ *   The entity we are indexing.
+ * @param string $entity_type
+ *   The type of entity we're dealing with.
+ */
+function apachesolr_scribe_solr_document_scribe(ApacheSolrDocument $document, $scribe, $entity_type) {
+  global $language;
+  //save language
+  $backup_language = $language;
+  
+  $nid = apachesolr_scribe_get_scribe_node_id($scribe->attachment_id);
+  $node = node_load($nid);
+
+  // Ideally we would display the node title and the search snippet, but if we 
+  // use that as the label, then the node title is searched and the node shows 
+  // up in the search results once for each annotation if search term matches.
+  // $doc_label = $node->title;
+  $doc_label = apachesolr_scribe_get_scribe_text($scribe->attachment_id);
+
+  $documents = array();
+  $document->entity_id = $scribe->attachment_id;
+  $document->entity_type = $entity_type;
+  $document->label = $doc_label;
+  $document->bs_status = 1;
+  $document->path = 'node/' . $nid;
+  $document->url = $document->site . 'node/' . $nid;
+
+  $languages = language_list();
+  foreach($languages as $langcode => $local_language)
+  {
+    //switch language to index translated fields
+    $language = $local_language;
+    $language_document = clone $document;
+
+    $language_document->language = $langcode;
+    $text = apachesolr_scribe_get_scribe_text($scribe->attachment_id);//drupal_render($build);
+    $language_document->content = apachesolr_clean_text($text);
+
+    $documents[] = $language_document;
+  }
+
+  // restore language
+  $language = $backup_language;
+  return $documents;
+}
+
+function apachesolr_scribe_get_scribe_text($attachment_id) {
+  $text = array();
+  $select = db_select('scribe_annotation', 's_annotate');
+  $select->addField('s_annotate', 'text', 'text');
+  $select->join('field_data_field_parent_ref', 'ref', 'ref.entity_id = s_annotate.annotation_id');
+  $select->condition('ref.field_parent_ref_target_id', $attachment_id, '=');
+  
+  $results = $select->execute();
+  
+  // This includes all threaded annotations. Let's just concatenate them
+  while ($item = $results->fetchAssoc()){
+    $text[] = $item['text'];
+  }
+  return implode(' ', $text);
+}
+
+function apachesolr_scribe_get_scribe_node_id($attachment_id) {
+  $nid = db_query('SELECT entity_id FROM {scribe_attachment} WHERE attachment_id = :attachment_id', array(':attachment_id' => $attachment_id))->fetchField();
+
+  return $nid;
+}
+
+/**
+ * Reindexing callback for ApacheSolr, for comment
+ */
+function apachesolr_scribe_solr_reindex_scribe() {
+  $indexer_table = apachesolr_get_indexer_table('scribe_attachment');
+  $transaction = db_transaction();
+  
+  try {
+      db_delete($indexer_table)
+        ->condition('entity_type', 'scribe_attachment')
+        ->execute();
+
+      $select = db_select('scribe_attachment', 's_attach');
+      $select->leftJoin('node', 'n', 'n.nid = s_attach.entity_id');
+      $select->addExpression("'scribe_attachment'", 'entity_type');
+      $select->addField('s_attach', 'attachment_id', 'entity_id');
+      $select->addField('s_attach','type', 'bundle');
+      $select->addExpression(REQUEST_TIME, 'changed');
+
+      $results = $select->execute();
+      
+      while ($item = $results->fetchAssoc()){
+         $insert = db_insert($indexer_table)
+          ->fields(array('entity_id' => $item['entity_id'], 'bundle' => $item['bundle'], 'entity_type' => $item['entity_type'], 'changed' => $item['changed']))
+          ->execute();
+      }
+    }
+    catch(Exception $e) {
+      $transaction->rollback();
+        watchdog_exception('Apachesolr Scribe', $e);
+        return FALSE;
+   }
+
+  return TRUE;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function apachesolr_scribe_form_apachesolr_search_custom_page_search_form_alter(&$form, &$form_state) {
+  if (isset($form['basic']['retain-filters'])) {
+    unset($form['basic']['retain-filters']);
+  }
+}
+
+/**
+ * Add the Organic Groups reference field to scribe attachment items
+ */
+function apachesolr_scribe_apachesolr_index_document_build_scribe_attachment(ApacheSolrDocument $document, $entity, $env_id) {
+  // Get the node for the scribe entity
+  $nid = apachesolr_scribe_get_scribe_node_id($entity->attachment_id);
+  $node = node_load($nid);
+
+  // Set the group id if it's available
+  if (isset($node->og_group_ref['und'][0]['target_id'])){
+    $gid = $node->og_group_ref['und'][0]['target_id'];
+    // Set the organic groups reference field
+    $document->setField('sm_og_group_ref', 'node:' . $gid);
+  }
+}
+
+/**
+ * Add snippet information to scribe content
+ */
+function apachesolr_scribe_preprocess_search_result (&$vars) {
+  $result = $vars['result'];
+
+  if ($result['entity_type'] == 'scribe_attachment') {
+    $scribe = current(entity_load('scribe_attachment', array($result['fields']['entity_id'])));
+    $info['type'] = ucfirst($scribe->type) . ' Annotation';
+  }
+  else {
+    $info['type'] = $vars['result']['node']->bundle_name;
+  }
+
+  if (!empty($result['module'])) {
+    $info['module'] = check_plain($result['module']);
+  }
+  if (!empty($result['user'])) {
+    $info['user'] = $result['user'];
+  }
+  else {
+    $u = user_load($scribe->uid);
+    $info['user'] = theme('username', array('account' => $u));
+  }
+  if (!empty($result['date'])) {
+    $info['date'] = format_date($result['date'], 'short');
+  }
+  else {
+    $info['date'] = format_date($scribe->created, 'short');
+  }
+  if (isset($result['extra']) && is_array($result['extra'])) {
+    $info = array_merge($info, $result['extra']);
+  }
+
+  $vars['info'] = implode(' - ', $info);
+}
+
+/**
+ * Override the mapping callback for bundle facets
+ */
+function apachesolr_scribe_facetapi_facet_info_alter(array &$facet_info, array $searcher_info) {
+  $facet_info['bundle']['map callback'] = 'apachesolr_scribe_map_bundle';
+}
+
+/**
+ * Mapping callback for bundle facets. Here we prefix the bundle name with their
+ * entity types. This is necessary because the same bundle name can be used by 
+ * multiple entities.
+ */
+function apachesolr_scribe_map_bundle(array $values, array $options) {
+  // Add attachments to the entity options
+  if (empty($options['entities'])) {
+    $options['entities'] = array('scribe_attachment', 'node');
+  }
+
+  // Prefix each of the bundles with their entity type
+  foreach ($options['entities'] as $entity_type) {
+    if ($info = entity_get_info($entity_type)) {
+      foreach ($info['bundles'] as $bundle_name => $bundle_info) {
+        if (isset($bundle_info['metadata table']) && strpos($bundle_info['metadata table'], 'scribe_') === 0) {
+          // The labels are "Scribe Image Attacher" and "Scribe Image Attacher",
+          // which may be confusing. Here we simplify them.
+          if (strpos($bundle_info['label'], 'Text') !== FALSE) {
+            $bundle_info['label'] = t('Text Annotation');
+          }
+          elseif (strpos($bundle_info['label'], 'Image') !== FALSE) {
+            $bundle_info['label'] = t('Image Annotation');
+          }
+        }
+
+        $bundle_name = $entity_type . '_' . $bundle_name;
+        $names[$bundle_name] = $bundle_info['label'];
+      }
+    }
+  }
+
+  return array_intersect_key($names, array_flip($values));
+}
+
+/**
+ * Prefix the document's bundle with its entity type.
+ */
+function apachesolr_scribe_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
+  $document->bundle = $entity_type . '_' . $document->bundle;
+}

@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function manuscript_node_install() {
+  // Attach scribe fields
+  $fields = array(
+    'body',
+    'field_english',
+    'field_facsimile',
+    'field_french',
+    'field_german',
+    'field_hebrew',
+    'field_italian',
+    'field_latin',
+    'field_spanish',
+    'field_transcription',
+  );
+  foreach ($fields as $field) {
+  	db_insert('scribe_attacher_field')
+      ->fields(array(
+        'field_name' => $field,
+        'entity_type' => 'node',
+        'bundle' => 'manuscript',
+      ))
+      ->execute();
+  }
+}

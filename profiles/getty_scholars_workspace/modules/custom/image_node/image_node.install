@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function image_node_install() {
+  // Attach scribe field
+	db_insert('scribe_attacher_field')
+    ->fields(array(
+      'field_name' => 'field_image',
+      'entity_type' => 'node',
+      'bundle' => 'image',
+    ))
+    ->execute();
+}

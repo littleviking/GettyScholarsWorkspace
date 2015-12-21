@@ -1,0 +1,71 @@
+<?php
+/**
+ * @file
+ * Code for the Getty Comparison feature.
+ */
+
+include_once 'comparison_node.features.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function comparison_node_menu() {
+  $items = array();
+  $items['modal/comparison/%node'] = array(
+    'title callback' => 'node_page_title',
+    'title arguments' => array(2),
+    'page callback' => 'comparison_modal_page',
+    'page arguments' => array(2),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 2),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function comparison_modal_page($node) {
+  drupal_add_css('
+    #admin-menu,
+    #section-header {
+      display: none;
+    }
+  ', 'inline');
+  return views_embed_view('comparison_slideshow', 'comparison_images_slideshow_block', $node->nid);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function comparison_node_form_comparison_node_form_alter(&$form, &$form_state) {
+  array_unshift($form['#validate'], 'comparison_node_validate_multiple');
+}
+
+/**
+ * Verify at least two images are selected for the comparison.
+ */
+function comparison_node_validate_multiple(&$form, $form_state) {
+  if (!isset($form_state['values']['field_image_references']['und'])) {
+    form_set_error('field_image_references', 'Unable to select images');
+    $form['field_image_references']['#attributes']['class'][] = 'comparison-error';
+  }
+  else {
+    $cnt = count($form_state['values']['field_image_references']['und']);
+    if ($cnt < 2) {
+      form_set_error('field_image_references', 'Please select at least two images in order to make a comparison');
+      $form['field_image_references']['#attributes']['class'][] = 'comparison-error';
+    }
+  }
+}
+
+/**
+ * Implements hook_views_pre_view().
+ */
+function comparison_node_views_pre_view(&$view) {
+  if ($view->name == 'comparisons' && $view->current_display == 'page') {
+    if (node_access('create', 'comparison')) {
+      $project_nid = arg(1);
+      $view->attachment_before = l(t('Add new comparison'), "project/$project_nid/lighttable");
+    }
+  }
+}
+

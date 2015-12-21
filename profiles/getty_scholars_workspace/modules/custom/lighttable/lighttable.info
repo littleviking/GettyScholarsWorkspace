@@ -1,0 +1,15 @@
+name = LightTable
+core = 7.x
+package = Getty Scholars' Workspace
+dependencies[] = better_exposed_filters
+dependencies[] = ctools
+dependencies[] = image
+dependencies[] = og
+dependencies[] = views
+dependencies[] = views_fluid_grid
+features[ctools][] = views:views_default:3.0
+features[features_api][] = api:2
+features[image][] = lighttable_main
+features[image][] = lighttable_thumb
+features[views_view][] = project_images
+mtime = 1450395982

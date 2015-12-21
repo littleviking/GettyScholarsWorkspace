@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * Implements hook_init().
+ */
+function gettysw_ltcz_init() {
+  drupal_add_js(drupal_get_path('module', 'gettysw_ltcz') . '/gettysw_ltcz.js');
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function gettysw_ltcz_views_api() {
+  return array(
+    "api" => "3.0",
+    "template path" => drupal_get_path("module", "gettysw_ltcz") . "/templates",
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function gettysw_ltcz_menu() {
+  $items['lighttable/cropzoom/%/%'] = array(
+    'title' => 'Light Table Cropzoom',
+    'page callback' => 'gettysw_ltcz_display_file',
+    'page arguments' => array(2, 3),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_js_alter().
+ */
+function gettysw_ltcz_js_alter(&$javascript) {
+  // Remove base version of lighttable js, which does not include cropzoom
+  // integration.
+  $lt_filepath = drupal_get_path('module', 'lighttable') . '/lighttable.js';
+  if (isset($javascript[$lt_filepath])) {
+    unset($javascript[$lt_filepath]);
+  }
+}
+
+/**
+ * Implements hook_cropzoom_copy_node().
+ */
+function gettysw_ltcz_cropzoom_copy_node($orig_node, &$new_node, $file, $gid) {
+  $new_node->og_group_ref['und'][] = array('target_id' => $gid);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gettysw_ltcz_theme($existing, $type, $theme, $path) {
+  return array(
+    'gettysw_ltcz_cropzoom_image' => array(
+      'template' => 'templates/cropzoom-image',
+      'variables' => array('path' => NULL, 'file' => NULL, 'width' => NULL, 'height' => NULL, 'nid' => NULL, 'gid' => NULL),
+    ),
+  );
+}
+
+function gettysw_ltcz_display_file($fid, $nid) {
+  drupal_add_css(drupal_get_path('module', 'gettysw_ltcz') . '/gettysw_ltcz.css');
+  $file = file_load($fid);
+  $full_url = file_create_url($file->uri);
+
+  // Get group ID for the node
+  $node = node_load($nid);
+  if (isset($node->og_group_ref['und'][0]['target_id'])) {
+    $gid = $node->og_group_ref['und'][0]['target_id'];
+  }
+  else {
+    $gid = NULL;
+  }
+
+  return theme('gettysw_ltcz_cropzoom_image', array('path' => $full_url, 'file' => $file, 'width' => $file->image_dimensions['width'], 'height' => $file->image_dimensions['height'], 'nid' => $nid, 'gid' => $gid)); 
+}

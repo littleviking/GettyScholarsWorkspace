@@ -1,0 +1,7 @@
+name = Bibliography WYSIWYG
+description = WYSIWYG button for adding bibliography references
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = og
+dependencies[] = wysiwyg

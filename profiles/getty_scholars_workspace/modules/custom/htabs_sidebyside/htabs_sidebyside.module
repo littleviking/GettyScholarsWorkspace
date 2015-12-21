@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function htabs_sidebyside_theme($existing, $type, $theme, $path) {
+  return array(
+    'htabs_sidebyside' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_group_format_settings().
+ */
+function htabs_sidebyside_field_group_format_settings($group) {
+  $form_element = array();
+
+  $field_group_types = field_group_formatter_info();
+  $mode = $group->mode == 'form' ? 'form' : 'display';
+  $formatter = $field_group_types[$mode][$group->format_type];
+
+  switch ($group->format_type) {
+    case 'htabs':
+      $form_element['instance_settings']['side_by_side'] = array(
+        '#title' => t('Render side-by-side'),
+        '#type' => 'checkbox',
+        '#default_value' => (!empty($group->format_settings['instance_settings']['side_by_side']) ? $group->format_settings['instance_settings']['side_by_side'] : FALSE),
+      );
+      break;
+    case 'htab':
+      $form_element['instance_settings']['hide_in_side_by_side'] = array(
+        '#title' => t('Hide in side-by-side view'),
+        '#type' => 'checkbox',
+        '#default_value' => (!empty($group->format_settings['instance_settings']['hide_in_side_by_side']) ? $group->format_settings['instance_settings']['hide_in_side_by_side'] : FALSE),
+      );
+      break;
+  }
+  return $form_element;
+}
+
+/**
+ * Implements hook_field_group_pre_render_alter().
+ */
+function htabs_sidebyside_field_group_pre_render_alter(&$element, $group, &$form) {
+  $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
+  $id = $form['#entity_type'] . '_' . $form['#bundle'] . '_' . $view_mode . '_' . $group->group_name;
+
+  switch ($group->format_type) {
+    case 'htabs':
+      if (!empty($group->format_settings['instance_settings']['side_by_side'])) {
+        $element['#theme_wrappers'][] = 'htabs_sidebyside';
+      }
+      break;
+    case 'htab':
+      $element['#hide_in_side_by_side'] = (!empty($group->format_settings['instance_settings']['hide_in_side_by_side']) ? $group->format_settings['instance_settings']['hide_in_side_by_side'] : FALSE);
+      break;
+  }
+}
+
+function theme_htabs_sidebyside($vars) {
+  $element = $vars['element'];
+  $clone = $element['#children'];
+  $children = element_children($element);
+  foreach ($children as $i) {
+    if (!empty($element[$i]['#hide_in_side_by_side'])) {
+      $clone = str_replace($element[$i]['#children'], '', $clone);
+    }
+  }
+  $clone = preg_replace(
+    array('/\bid="(.*?)"/', "/\bid='(.*?)'/"),
+    array('id="$1-clone"', "id='$1-clone'"),
+    $clone
+  );
+  drupal_add_js(drupal_get_path('module', 'htabs_sidebyside') . '/htabs_sidebyside.js');
+  drupal_add_css(drupal_get_path('module', 'htabs_sidebyside') . '/htabs_sidebyside.css');
+  return '
+    <div class="side-by-side-row clearfix">
+      <div class="original">' . $element['#children'] . '</div>
+      <div class="clone">' . $clone . '</div>
+    </div>
+  ';
+}

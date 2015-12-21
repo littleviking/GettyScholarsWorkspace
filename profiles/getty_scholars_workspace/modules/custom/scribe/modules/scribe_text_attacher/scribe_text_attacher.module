@@ -1,0 +1,60 @@
+<?php
+
+
+/**
+ * Implements hook_scribe_attacher_info().
+ */
+function scribe_text_attacher_scribe_attacher_info() {
+  $attachers['text'] = array(
+    'label' => 'Scribe Text Attacher',
+    'description' => 'This attacher allows annotations to be attached to text fields.',
+    'metadata table' => 'scribe_text_metadata',
+    'field types' => array(
+      'text',
+      'text_long',
+      'text_with_summary',
+    ),
+    'library' => array(
+      'module' => 'scribe_text_attacher',
+      'name' => 'annotator',
+    ),
+  );
+
+  return $attachers;
+}
+
+/**
+ * Implements hook_library().
+ *
+ * TODO: Switch to libraries API.
+ */
+function scribe_text_attacher_library() {
+  $module_path = drupal_get_path('module', 'scribe_text_attacher');
+
+  $libraries['annotator'] = array(
+    'title' => 'Annotator',
+    'website' => 'http://okfnlabs.org/annotator/',
+    'version' => '1.2.6',
+    'js' => array(
+      $module_path . '/annotator/date-format.js' => array('scope' => 'footer'),
+      $module_path . '/annotator/annotator-full.min.js' => array('scope' => 'footer'),
+      $module_path . '/js/enhanced_position.js' => array('scope' => 'footer'),
+      $module_path . '/js/drupal_store.js' => array('scope' => 'footer'),
+      $module_path . '/js/threading.js' => array('scope' => 'footer'),
+      $module_path . '/js/drupal_permissions.js' => array('scope' => 'footer'),
+      $module_path . '/js/scribe_annotator.js' => array('scope' => 'footer'),
+    ),
+    'css' => array(
+      $module_path . '/annotator/annotator.min.css' => array(
+        'type' => 'file',
+        'media' => 'screen',
+      ),
+      $module_path . '/css/scribe_text.css' => array(
+        'type' => 'file',
+        'media' => 'screen',
+      ),
+    ),
+  );
+
+  return $libraries;
+}

@@ -1,0 +1,8 @@
+#admin-menu,
+#section-header {
+  display: none;
+}
+
+.view-comparison-reference-list .item-list li {
+  list-style-type: disc;
+}

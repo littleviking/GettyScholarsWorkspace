@@ -1,0 +1,722 @@
+<?php
+
+/**
+ * Load API functions
+ */
+require_once 'scribe.attachment.inc';
+require_once 'scribe.annotation.inc';
+
+/**
+ * Implements hook_hook_info().
+ */
+function scribe_hook_info() {
+  $hooks['scribe_attacher_info'] = array(
+    'group' => 'info',
+  );
+
+  $hooks['scribe_metadata_properties'] = array(
+    'group' => 'info',
+  );
+
+  return $hooks;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function scribe_menu() {
+  $items = array();
+
+  $items['admin/config/content/scribe'] = array(
+    'title' => 'Scribe Annotation Settings',
+    'description' => 'Change settings for the scribe annotation system',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'scribe_admin_landing',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/scribe.admin.inc',
+  );
+
+  $items['admin/config/content/scribe/landing'] = array(
+    'title' => 'Landing',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function scribe_entity_info() {
+  $entities['scribe_attachment'] = array(
+    'label' => t('Scribe Attachment'),
+    'entity class' => 'ScribeAttachment',
+    'controller class' => 'ScribeAttachmentController',
+    'base table' => 'scribe_attachment',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'attachment_id',
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+    'load hook' => 'scribe_attachment_load',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Default'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'scribe',
+    'access callback' => 'scribe_attachment_access',
+  );
+
+  $entities['scribe_annotation'] = array(
+    'label' => t('Scribe Annotation'),
+    'entity class' => 'ScribeAnnotation',
+    'controller class' => 'ScribeAnnotationController',
+    'base table' => 'scribe_annotation',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'annotation_id',
+      'bundle' => 'type',
+    ),
+    'bundles' => array(
+      'text' => array(
+        'label' => t('Text Annotation'),
+        'uri callback' => 'entity_class_uri',
+      ),
+    ),
+    'load hook' => 'scribe_annotation_load',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Default'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'scribe',
+    'access callback' => 'scribe_annotation_access',
+  );
+
+  return $entities;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function scribe_entity_info_alter(&$entity_info) {
+  $attachers = module_invoke_all('scribe_attacher_info');
+
+  foreach ($attachers as $bundle => $attacher) {
+    $entity_info['scribe_attachment']['bundles'][$bundle] = array(
+      'metadata table' => $attacher['metadata table'],
+      'label' => $attacher['label'],
+    );
+  }
+}
+
+/**
+ * Implements hook_preprocess_field().
+ */
+function scribe_preprocess_field(&$variables, $hook) {
+  // This stores a list of all loaded attachment
+  // libraries so that they aren't loaded twice
+  static $load_map = array();
+
+  // Load all of the attachers
+  $attach_data = &drupal_static(__FUNCTION__);
+  if (!isset($attachers)) {
+    $attach_data = array(
+      'attachable_fields' => scribe_load_attachable_fields(),
+      'attachers' => module_invoke_all('scribe_attacher_info'),
+    );
+  }
+
+  // See if the field instance can be annotated
+  $element = $variables['element'];
+  foreach ($attach_data['attachable_fields'] as $attacher) {
+    if ($element['#entity_type'] == $attacher->entity_type && $element['#bundle'] == $attacher->bundle && $element['#field_name'] == $attacher->field_name) {
+      // Load the correct javascript library for annotation
+      // and ensure it's only loaded once
+      foreach ($attach_data['attachers'] as $name => $attach_module) {
+        if (in_array($element['#field_type'], $attach_module['field types'])) {
+          $variables['classes_array'][] = 'scribe-' . $name  . '-annotation';
+
+          if (!isset($load_map[$name])) {
+            drupal_add_library($attach_module['library']['module'], $attach_module['library']['name']);
+            $load_map[$name] = TRUE;
+          }
+        }
+      }
+
+      // Retrieve the Entity ID so we can load annotations for
+      // element that have already been annotated, and so that
+      // we can annotate additional entities
+      $entity_id = entity_id($element['#entity_type'], $element['#object']);
+
+      // We need to potentially check for create permissions on an entity by entity basis
+      // For create this is what entity we are attaching to that matters
+      // TODO: This is a dirty hack and should be redone into a more flexible perms system
+      $attacher->entity_id = $entity_id;
+      $attacher->annotation_type = $name;
+      $attacher->object = $element['#object'];
+      $access_create = scribe_attachment_access('create', $attacher, NULL, $element['#entity_type']);
+
+      // Add data attributes onto the field, this will be used for
+      // saving an annotation
+      $variables['attributes_array'] = array(
+        'data-entity_type' => check_plain($attacher->entity_type),
+        'data-field_name' => check_plain($attacher->field_name),
+        'data-bundle' => check_plain($attacher->bundle),
+        'data-entity_id' => $entity_id,
+        'data-annotation_create' => (int)$access_create,
+      );
+
+      // See if there are anny attachment for this
+      // field on this entity
+      $query = new EntityFieldQuery();
+      $query
+        ->entityCondition('entity_type', 'scribe_attachment')
+        ->propertyCondition('entity_type', $attacher->entity_type)
+        ->propertyCondition('field_name', $attacher->field_name)
+        ->propertyCondition('bundle', $attacher->bundle)
+        ->propertyCondition('entity_id', $entity_id);
+
+      // If there is a result then we save it
+      $result = $query->execute();
+      if (!empty($result['scribe_attachment'])) {
+        scribe_register_annotated_field($result['scribe_attachment']);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_permission().
+ *
+ * Permissions apply to scribe attachments.
+ * For now we'll assume that the ability
+ * to annotate is in lockstep with those
+ * permissions.
+ */
+function scribe_permission() {
+  $perms = array();
+
+  $info = entity_get_info('scribe_attachment');
+
+  // Because of the current structure of RestWS it's
+  // very difficult to segment out permissions by type.
+  // Even when a wrapper is created from the submitted
+  // values it doesn't contain bundle data, so it remains
+  // this way for now.
+  $perms['create annotations'] = array(
+    'title' => t('Create Annotations'),
+    'description' => t('Allows users to create new annotations.'),
+  );
+
+  foreach ($info['bundles'] as $bundle => $data) {
+    $name = drupal_ucfirst($bundle);
+    $perms['view ' . $bundle . ' annotations'] = array(
+      'title' => t('View @name Annotations', array('@name' => $name)),
+      'description' => t('Allows users to view any @name annotations.', array('@name' => $name)),
+    );
+
+    $perms['update any ' . $bundle . ' annotations'] = array(
+      'title' => t('Update Any @name Annotations', array('@name' => $name)),
+      'description' => t('Allow users to update any @name annotations.', array('@name' => $name)),
+    );
+
+    $perms['update own ' . $bundle . ' annotations'] = array(
+      'title' => t('Update Own @name Annotations', array('@name' => $name)),
+      'description' => t('Allow users to update their own @name annotations.', array('@name' => $name)),
+    );
+
+    $perms['delete any ' . $bundle . ' annotations'] = array(
+      'title' => t('Delete Any @name Annotations', array('@name' => $name)),
+      'description' => t('Allow users to delete any @name annotations.', array('@name' => $name)),
+    );
+
+    $perms['delete own ' . $bundle . ' annotations'] = array(
+      'title' => t('Delete Own @name Annotations', array('@name' => $name)),
+      'description' => t('Allow users to delete their own @name annotations.', array('@name' => $name)),
+    );
+  }
+
+  return $perms;
+}
+
+/**
+ * Access callback for attachments.
+ */
+function scribe_attachment_access($op, $entity = NULL, $account = NULL, $entity_type = '') {
+  global $user;
+  if ($account == NULL) {
+    $account = $user;
+  }
+
+  // Allow modules to have their say about accessing an annotation.
+  // If a module returns any value that is not FALSE this will short
+  // circuit normal permissions completely. If _any_ module denies
+  // access then access will be denied.
+  $perms = module_invoke_all('scribe_entity_access', $op, $entity, $account, $entity_type);
+  if (!empty($perms)) {
+    foreach ($perms as $perm) {
+      if (!$perm) {
+        return FALSE;
+      }
+    }
+
+    return TRUE;
+  }
+
+  // Format the access string and return the result of user access
+  $access_string = scribe_format_access_string($op, $entity, $account);
+  return user_access($access_string);
+}
+
+/**
+ * Access callback for annotations.
+ *
+ * For now this is in lockstep with attachments.
+ */
+function scribe_annotation_access($op, $entity = NULL, $account = NULL, $entity_type = '') {
+  return scribe_attachment_access($op, $entity, $account, $entity_type);
+}
+
+/**
+ * Create a string to pass to user access.
+ */
+function scribe_format_access_string($op, $entity, $account) {
+  if ($op == 'create') {
+    return 'create annotations';
+  }
+
+  if (!empty($entity->object)) {
+    $entity = $entity->object;
+  }
+  list(, , $bundle) = entity_extract_ids($entity->type, $entity);
+
+  // See if this is the user's own entity
+  // If it is, we modify the permission string
+  if (($op == 'update' || $op == 'delete') && $entity->uid == $account->uid) {
+    $access_string = $op . ' own ' . $bundle . ' annotations';
+  }
+  else if ($op == 'update' || $op == 'delete') {
+    $access_string = $op . ' any ' . $bundle . ' annotations';
+  }
+  else {
+    $access_string = $op . ' ' . $bundle . ' annotations';
+  }
+
+  return $access_string;
+}
+
+/**
+ * Implements hook_js_alter().
+ *
+ * Add data on annotated fields to the page
+ * and add a CSRF token for RESTful Web Services
+ */
+function scribe_js_alter(&$js) {
+  global $user;
+
+  // If there are any fields add their data
+  // to the page so that annotations can be shown
+  $fields = scribe_register_annotated_field(NULL);
+  $attachments = $fields ? scribe_attachment_load_multiple(array_keys($fields)) : array();
+
+
+  foreach ($attachments as $key => $attachment) {
+    // If the user can view the annotation
+    // we output into the javascript of the page
+    if (!entity_access('view', 'scribe_attachment', $attachment, $user)) {
+      unset($attachments[$key]);
+    }
+  }
+
+  // For each available annotation type
+  // we add to the page if the user can create it
+  $info = entity_get_info('scribe_attachment');
+  $create_perms = array();
+  $create_perm = user_access('create annotations');
+  foreach ($info['bundles'] as $bundle => $info) {
+    $create_perms[$bundle]['create'] = $create_perm;
+  }
+
+  $js['settings']['data'][]['scribe'] = array(
+    'csrf_token' => drupal_get_token('restws'),  // Add a CSRF token to settings
+    'attachments' => empty($attachments) ? array() : $attachments,
+    'username' => $user->uid == 0 ? t('Anonymous') : check_plain($user->name),
+    'permissions' => $create_perms,
+  );
+
+  // Allow alterations of the JS again
+  // This will all for alterations to occur after
+  // all of the attachers have been added into the
+  // js array already, useful for adding plugins
+  // that operate on more than one attacher
+  drupal_alter('scribe_js', $js);
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+function scribe_entity_property_info_alter(&$info) {
+  $properties = &$info['taxonomy_term']['properties'];
+
+  $properties['machine_name'] = array(
+    'label' => t("Machine Name"),
+    'description' => t("The machine name of the term type."),
+    'type' => 'text',
+    'setter callback' => 'entity_property_verbatim_set',
+  );
+}
+
+/**
+ * Register annotated entities
+ * @param  $entity_info
+ *   An array keyed with the following information:
+ *
+ * @return
+ *  If $entity_info is NULL then the array containing
+ *  all registered entity info will be returned.
+ */
+function scribe_register_annotated_field($entity_info) {
+  // Make entities static
+  static $entities;
+
+  // If $entity_info is purposely
+  // set to null then we return all the
+  // registered entities so we can add them
+  // to the page
+  if ($entity_info === NULL) {
+    return $entities;
+  }
+
+  // Add the entity into the registry
+  if (!isset($entities)) {
+    $entities = array();
+  }
+  $entities = $entities + $entity_info;
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function scribe_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  // Retrieve the fields that each module can attach to
+  $attachers = module_invoke_all('scribe_attacher_info');
+
+  // See if annotation is active on this field instance already
+  $is_active = scribe_annotation_is_active($form['#instance']);
+  $form_state['#annotations']['is_active'] = $is_active;
+
+  // See if any module handles this
+  // particular field type
+  $can_handle = FALSE;
+  foreach ($attachers as $attacher) {
+    if(in_array($form['#field']['type'], $attacher['field types'])) {
+      $can_handle = TRUE;
+      break;
+    }
+  }
+
+  // If one does we modify the form so
+  // that the user can choose to annotate it.
+  // TODO: In the future allow multiple modules
+  // to annotate the same field types
+  // TODO: Allow different annotation types to
+  // be attached
+  if ($can_handle) {
+    $form['#submit'][] = 'scribe_record_attachers';
+
+    $form['annotations'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Annotations'),
+      '#weight' => 100,
+      '#tree' => TRUE,
+    );
+
+    $form['annotations']['active'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Activate annotations on this field.'),
+      '#default_value' => $is_active,
+    );
+  }
+}
+
+/**
+ * Record the configuration of attachers and the fields
+ * that they are attached to.
+ */
+function scribe_record_attachers(&$form, &$form_state) {
+  $is_active = $form_state['#annotations']['is_active'];
+  $instance = $form_state['values']['instance'];
+  $annotations = $form_state['values']['annotations'];
+
+  // If the checkbox is checked and annotation  // weren't already turned on then we turn them
+  // on
+  if ($annotations['active'] && !$is_active) {
+    $record = array(
+      'field_name' => $instance['field_name'],
+      'entity_type' => $instance['entity_type'],
+      'bundle' => $instance['bundle'],
+    );
+
+    drupal_write_record('scribe_attacher_field', $record);
+  }
+  // If the checkbox is not checked then we delete
+  // the record.
+  else if (!$annotations['active']) {
+    $values = array(
+      ':field_name' => $instance['field_name'],
+      ':entity_type' => $instance['entity_type'],
+      ':bundle' => $instance['bundle'],
+    );
+
+    db_query('DELETE FROM {scribe_attacher_field}
+              WHERE field_name = :field_name
+              AND entity_type = :entity_type
+              AND bundle = :bundle', $values);
+  }
+}
+
+/**
+ * Determine if annotations are active on a particular field instance.
+ *
+ * @param $field
+ *   An array representing the Drupal field instance.
+ * @return
+ *  True - if annotations are active on this field instance
+ *  False - if annotations are not active on this field instance
+ */
+function scribe_annotation_is_active($field) {
+  $field_values = array(
+    ':field_name' => $field['field_name'],
+    ':entity_type' => $field['entity_type'],
+    ':bundle' => $field['bundle'],
+  );
+
+  $result = db_query("SELECT COUNT(1) FROM {scribe_attacher_field}
+                      WHERE field_name = :field_name
+                      AND entity_type = :entity_type
+                      AND bundle = :bundle", $field_values)->fetchField();
+
+  return (bool) $result;
+}
+
+/**
+ * Load all field instance annotation attachers.
+ */
+function scribe_load_attachable_fields() {
+  return db_query("SELECT * FROM {scribe_attacher_field}")->fetchAll();
+}
+
+
+/**
+ * Determine if a particular field instance is annotated.
+ *
+ * @param $field array
+ *  An array with the following keys
+ *    field_name - The machine name of the field
+ *    entity_type - The type of entity the field instance is attached to
+ *    bundle - The bundle the field instance is attached to
+ *    entity_id - The ID of the entity the field instance is attached to.
+ * @return bool
+ *  True - If the field instance is annotated
+ *  False - If the field instance is not annotated
+ */
+function scribe_field_instance_is_annotated($field) {
+  $field_values = array(
+    ':field_name' => $field->field_name,
+    ':entity_type' => $field->entity_type,
+    ':bundle' => $field->bundle,
+    ':entity_id' => $field->entity_id,
+  );
+
+  $result = db_query("SELECT COUNT(1) FROM {scribe_attachment}
+                      WHERE field_name = :field_name
+                      AND entity_type = :entity_type
+                      AND bundle = :bundle
+                      AND entity_id = :entity_id", $field_values)->fetchField();
+
+  return (bool)$result;
+}
+
+/**
+ * Implements hook_scribe_attachment_load().
+ *
+ * Automatically load attachment metadata.
+ */
+function scribe_entity_load($entities, $type) {
+  global $user;
+
+  if ($type == 'scribe_attachment') {
+    foreach ($entities as $attachment) {
+      // Determine the correct metadata table
+      $entity_info = $attachment->entityInfo();
+      $metadataTable = $entity_info['bundles'][$attachment->bundle()]['metadata table'];
+
+      // Get the data from the table
+      $data = db_select($metadataTable, 'm')
+        ->fields('m')
+        ->condition('attachment_id', $attachment->identifier())
+        ->execute()
+        ->fetchAssoc();
+
+      // Load data into BUNDLENAME_attachment_info key
+      $record_name = $attachment->bundle() . '_attachment_info';
+      $attachment->{$record_name} = $data;
+
+      // Unserialize data in subquery
+      $sub_schema = drupal_get_schema($metadataTable);
+      foreach ($sub_schema['fields'] as $field => $info) {
+        if (!empty($info['serialize'])  && isset($attachment->{$record_name}[$field])) {
+          $attachment->{$record_name}[$field] = unserialize($attachment->{$record_name}[$field]);
+        }
+      }
+
+      // Grab the annotation related to this attachment
+      $query = new EntityFieldQuery();
+      $query
+        ->entityCondition('entity_type', 'scribe_annotation')
+        ->fieldCondition('field_parent_ref', 'target_id', array($attachment->attachment_id))
+        ->propertyCondition('parent_id', 0);
+      $result = $query->execute();
+
+      if ($result) {
+        $first = reset($result['scribe_annotation']);
+        $annotation = entity_load_single('scribe_annotation', $first->annotation_id);
+        $attachment->annotation = $annotation;
+      }
+    }
+  }
+  else if ($type == 'scribe_annotation') {
+    // Load all child annotations
+    foreach ($entities as $annotation) {
+      $children = db_query("SELECT annotation_id
+          FROM {scribe_annotation}
+          WHERE parent_id = :pid", array(':pid' => $annotation->annotation_id))->fetchCol();
+
+
+      $children = entity_load('scribe_annotation', $children);
+      $annotation->children = array_values($children);
+
+      $annotation->field_parent_ref = array(
+        'id' => $annotation->field_parent_ref[LANGUAGE_NONE][0]['target_id'],
+      );
+    }
+  }
+
+  // TODO: This unfortunately causes a lot of access checks
+  // because before updating and deleting the entities are loaded
+  // However, there may not be a good place to put this
+  if ($type == 'scribe_attachment' || $type == 'scribe_annotation') {
+    foreach ($entities as $entity) {
+      // Also add permissions so that the user interface
+      // of various javascript libraries can be updated accordingly.
+      // These particular permissions change depending on whether
+      // the user actually owns the content
+      $perms = array(
+        'update',
+        'delete',
+      );
+      $attach_perms = array();
+      foreach ($perms as $perm) {
+        $attach_perms[$perm] = entity_access($perm, $type, $entity, $user);
+      }
+      $entity->permissions = $attach_perms;
+
+      // Add username into attachments and annotations
+      $account = user_load($entity->uid);
+      $entity->user = theme('username', array('account' => $account));
+    }
+  }
+}
+
+/**
+ * Implements hook_scribe_attachment_insert().
+ *
+ * Saves associated attachment metadata when inserting a record.
+ */
+function scribe_scribe_attachment_insert($attachment) {
+  // Get info about the metadata
+  $entity_info = $attachment->entityInfo();
+  $metadataTable = $entity_info['bundles'][$attachment->bundle()]['metadata table'];
+  $record_name = $attachment->bundle() . '_attachment_info';
+
+  // Save the attachment metadata
+  $metadataRecord = $attachment->{$record_name};
+  $metadataRecord['attachment_id'] = $attachment->identifier();
+  $result = drupal_write_record($metadataTable, $metadataRecord);
+}
+
+/**
+ * Implements hook_scribe_attachment_delete().
+ *
+ * Deletes associated attachment metadata and the associated annotation.
+ */
+function scribe_scribe_attachment_delete($attachment) {
+  // Delete any related metadata
+  $entity_info = $attachment->entityInfo();
+  $metadataTable = $entity_info['bundles'][$attachment->bundle()]['metadata table'];
+  db_delete($metadataTable)
+    ->condition('attachment_id', $attachment->identifier)
+    ->execute();
+
+  // Delete the annotation related to attachment
+  $query = new EntityFieldQuery();
+  $result = $query
+    ->entityCondition('entity_type', 'scribe_annotation')
+    ->fieldCondition('field_parent_ref', 'target_id', array($attachment->attachment_id))
+    ->execute();
+
+  if ($result) {
+    entity_delete_multiple('scribe_annotation', array_keys($result['scribe_annotation']));
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function scribe_entity_delete($entity, $type) {
+  if ($type == 'scribe_annotation') {
+    $children = db_query("SELECT annotation_id
+          FROM {scribe_annotation}
+          WHERE parent_id = :pid", array(':pid' => $entity->annotation_id))->fetchCol();
+
+    foreach ($children as $child_id) {
+      entity_delete('scribe_annotation', $child_id);
+    }
+  }
+}
+
+/**
+ * Create field instances on scribe annotations for necessary functionality.
+ */
+function scribe_attach_required_fields($bundle) {
+  // Attach an annotation field reference to the attachment if one doesn't already exist
+  $info = field_info_instance('scribe_annotation', 'field_parent_ref', $bundle);
+  if (!$info) {
+    $instance = array(
+      'field_name' => 'field_parent_ref',
+      'entity_type' => 'scribe_annotation',
+      'bundle' => $bundle,
+      'label' => t('Parent Reference'),
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+      'settings' => array(
+        'target_type' => 'scribe_attachment',
+        'handler_settings' => array(
+          array('target_bundles' => array('text', 'image')),
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+}

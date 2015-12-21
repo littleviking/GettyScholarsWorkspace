@@ -1,0 +1,47 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function scribe_text_attacher_schema() {
+  $schema['scribe_text_metadata'] = array(
+    'description' => 'Stores metadata for text annotations.',
+    'fields' => array(
+      'attachment_id' => array(
+        'description' => 'The ID of of the attachment to which the annotation is associated.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'annotator_schema_version' => array(
+        'description' => 'Schema Version of Annotator being used, by default v1.0',
+        'type' => 'varchar',
+        'length' => 12,
+        'default' => 'v1.0',
+        'not null' => TRUE,
+      ),
+      'quote' => array(
+        'description' => 'The text that is being annotated.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'uri' => array(
+        'description' => 'URI of annotated document.',
+        'type' => 'varchar',
+        'length' => 2048,
+        'not null' => FALSE,
+        'sortable' => TRUE
+      ),
+      'ranges' => array(
+        'description' => 'Ranges that are covered by the attachment.',
+        'type' => 'blob',
+        'not null' => TRUE,
+        'size' => 'big',
+        'serialize' => TRUE,
+      ),
+    ),
+  );
+
+  return $schema;
+}

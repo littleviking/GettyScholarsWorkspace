@@ -1,0 +1,13 @@
+name = Scholars' Workspace Theme
+core = 7.x
+package = Getty Scholars' Workspace
+dependencies[] = ctools
+dependencies[] = strongarm
+features[ctools][] = strongarm:strongarm:1
+features[features_api][] = api:2
+features[variable][] = admin_theme
+features[variable][] = node_admin_theme
+features[variable][] = theme_default
+features[variable][] = theme_gettysw_settings
+features[variable][] = views_ui_custom_theme
+mtime = 1450406962

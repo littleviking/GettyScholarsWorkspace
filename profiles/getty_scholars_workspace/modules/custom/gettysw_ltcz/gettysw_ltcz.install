@@ -1,0 +1,8 @@
+<?php
+
+function gettysw_ltcz_install(){
+  db_update('system')
+    ->fields(array('weight' => -5))
+    ->condition('name', 'gettysw_ltcz', '=')
+    ->execute();
+}

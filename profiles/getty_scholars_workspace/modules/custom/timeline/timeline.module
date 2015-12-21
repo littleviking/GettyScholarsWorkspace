@@ -1,0 +1,20 @@
+<?php
+/**
+ * @file
+ * Code for the Timeline feature.
+ */
+
+include_once 'timeline.features.inc';
+
+/**
+ * Implements hook_views_pre_view().
+ */
+function timeline_views_pre_view(&$view) {
+  if ($view->name == 'project_timeline' && $view->current_display == 'page') {
+    if (node_access('create', 'timeline_date')) {
+      $project_nid = arg(1);
+      $view->attachment_before = l(t('Add new date'), "node/add/timeline-date/$project_nid");
+    }
+  }
+}
+

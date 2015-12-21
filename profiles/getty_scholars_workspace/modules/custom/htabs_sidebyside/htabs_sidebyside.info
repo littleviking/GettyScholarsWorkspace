@@ -1,0 +1,6 @@
+name = Horizontal Tabs Side-by-Side
+description = "Add side-by-side display and form widget for field group horizontal tabs."
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = field_group

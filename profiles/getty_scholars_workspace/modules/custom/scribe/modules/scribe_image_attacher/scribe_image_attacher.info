@@ -1,0 +1,8 @@
+name = Scribe Image Attacher
+description = Allows annotations to be attached to specific parts of an image.
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = scribe
+dependencies[] = scribe_text_attacher
+dependencies[] = jquery_update

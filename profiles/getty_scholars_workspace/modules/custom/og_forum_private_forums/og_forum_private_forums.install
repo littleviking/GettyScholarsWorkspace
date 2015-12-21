@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * OG Forum Private Forums install
+ */
+
+/**
+ * Implements hook_install().
+ */
+function og_forum_private_forums_install() {
+  // Add group audience to forum taxonomy terms.
+  $vocabulary = taxonomy_vocabulary_load(variable_get('forum_nav_vocabulary', 0));
+  og_create_field(OG_AUDIENCE_FIELD, 'taxonomy_term', $vocabulary->machine_name);
+
+  // Add group audience and group visibility to topic.
+  og_create_field(OG_AUDIENCE_FIELD, 'node', 'forum');
+  og_create_field(OG_CONTENT_ACCESS_FIELD, 'node', 'forum');
+
+  // Delete the initial forums that don't have groups.
+  $tree = taxonomy_get_tree(variable_get('forum_nav_vocabulary', 0));
+  foreach ($tree as $term) {
+    $t = taxonomy_term_load($term->tid);
+    if (!count($t->og_group_ref)) {
+      taxonomy_term_delete($term->tid);
+    }
+  }
+}

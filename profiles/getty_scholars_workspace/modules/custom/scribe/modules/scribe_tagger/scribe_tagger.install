@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ */
+function scribe_tagger_uninstall() {
+  // Delete the instance of the tag field
+  $tag_field_instance = array(
+    'field_name' => 'field_annotation_tags',
+    'entity_type' => 'scribe_attachment',
+    'bundle' => 'text',
+    'label' => t('Annotation Tags'),
+    'widget' => array(
+      'type' => 'taxonomy_autocomplete',
+    ),
+    'settings' => array(),
+  );
+  field_delete_instance($tag_field_instance);
+
+  // Delete the field itself
+  field_delete_field('field_annotation_tags');
+
+  // Remove the setting for the taxonomy vocabulary
+  variable_del('scribe_tagger_vocabulary');
+}

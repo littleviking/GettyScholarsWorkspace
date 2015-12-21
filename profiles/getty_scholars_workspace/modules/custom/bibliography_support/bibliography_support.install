@@ -1,0 +1,41 @@
+<?php
+
+/**
+ *  Implements hook_install().
+ */
+function bibliography_support_install() {
+  //gets the term to ensures that it can add the default ones
+  $vocab = taxonomy_vocabulary_machine_name_load('bibliography_categories');
+  
+  //ensures that the vocab is an object
+  if (is_object($vocab) && isset($vocab->vid)) {
+    //variables
+    $tree = taxonomy_get_tree($vocab->vid);
+    $terms = array();
+    $create = array(
+      'Exhibition Catalogs',
+      'Books',
+      'Periodicals',
+      'Unpublished and Informally Published Material',
+      'Audiovisual Material',
+    );
+    
+    foreach ($tree as $key => $value) {
+      $terms[] = ucfirst($value->name);
+    }
+    
+    //gets the diff to create the term in the system
+    $diff = array_diff($create, $terms);
+    
+    if (!empty($diff)) {
+      //adds new term for each not in the system
+      foreach ($diff as $key => $value) {
+        $term = new stdClass();
+        $term->vid = $vocab->vid;
+        $term->name = $value;
+        $term->weight = $key;
+        taxonomy_term_save($term);
+      }
+    }
+  }
+}

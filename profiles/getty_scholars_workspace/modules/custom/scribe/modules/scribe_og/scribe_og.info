@@ -1,0 +1,7 @@
+name = Scribe Organic Groups
+description = Integrates scribe with organic groups permissions.
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = og
+dependencies[] = scribe

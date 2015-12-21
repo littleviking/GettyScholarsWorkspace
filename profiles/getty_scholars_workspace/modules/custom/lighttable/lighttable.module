@@ -1,0 +1,183 @@
+<?php
+/**
+ * @file
+ * Code for the LightTable feature.
+ */
+
+include_once 'lighttable.features.inc';
+
+/**
+ * Implements hook_init().
+ */
+function lighttable_init() {
+  // drupal_add_js(drupal_get_path('module', 'lighttable') . '/lighttable.js');
+  // drupal_add_css(drupal_get_path('module', 'lighttable') . '/lighttable.css');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function lighttable_menu() {
+  $items['project/%/lighttable'] = array(
+    'title callback' => 'lighttable_page_title_callback',
+    'title arguments' => array(1),
+    'page callback' => 'lighttable_display',
+    'page arguments' => array(1),
+    'access callback' => 'og_is_member',
+    'access arguments' => array('node', 1),
+  );
+
+  $items['lighttable/comparison/%'] = array(
+    'title' => 'Make Comparison',
+    'page callback' => 'lighttable_create_comparison',
+    'page arguments' => array(2),
+    'access callback' => 'og_is_member',
+    'access arguments' => array('node', 2),
+  );
+
+  $items['lighttable/available-images/%'] = array(
+    'title' => 'Available Images view',
+    'page callback' => 'lighttable_available_images',
+    'page arguments' => array(2),
+    'access callback' => 'og_is_member',
+    'access arguments' => array('node', 2),
+  );
+
+  return $items;
+}
+
+function lighttable_page_title_callback($gid) {
+  return node_load($gid)->title . ' Light Table';
+}
+
+function lighttable_display($gid) {
+  drupal_add_js(drupal_get_path('module', 'lighttable') . '/lighttable.js');
+  drupal_add_css(drupal_get_path('module', 'lighttable') . '/lighttable.css');
+  $output = '';
+
+  // Add container for recent images
+  $recent = '<div id="lighttable-left"><div id="make-comparison">MAKE COMPARISON</div><div id="lt-recent-images"><h3>Recent Images</h3><div class="content"></div></div></div>';
+  $output .= $recent;
+
+  // Add container for light table workspace
+  // $lt_main = '<div id="lighttable"><div id="make-comparison">MAKE COMPARISON</div></div>';
+  $lt_main = '<div id="lighttable"></div>';
+  $output .= $lt_main;
+
+  // Add view with available images for this project
+  $available_images_grid = views_embed_view('project_images', 'available_images_block', $gid);
+  $available_images_list = views_embed_view('project_images', 'available_images_list_block', $gid);
+  $available_images = '<div id="lt-available-images">' . $available_images_grid . $available_images_list . '</div>';
+  $output .= $available_images;
+
+  return $output;
+}
+
+function lighttable_create_comparison($gid) {
+  $fids = $_POST['fids'];
+  $fids = json_decode($fids);
+
+  global $user;
+  // Create new node
+  $new_node = new stdClass();
+  $new_node->type = 'comparison';
+  $new_node->title = 'Comparison';
+  $new_node->uid = $user->uid;
+  $new_node->language = LANGUAGE_NONE;
+
+  if (module_exists('comment')) {
+    $new_node->comment = variable_get('comment_comparison', COMMENT_NODE_OPEN);
+  }
+
+  if (isset($gid) && og_is_member('node', $gid)) {
+    $new_node->og_group_ref['und'][] = array('target_id' => $gid);
+
+    // Add files to this
+    foreach ($fids as $fid) {
+      $new_node->field_image_references[LANGUAGE_NONE][] = array('target_id' => $fid);
+    }
+
+    node_save($new_node);
+    print $new_node->nid;
+  }
+  else {
+    print 'Unable to access current project images in order to create a comparison.';
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function lighttable_form_comparison_node_form_alter(&$form, &$form_state) {
+  // Display only the available images for this project
+  if (isset($form_state['node']->og_group_ref['und'])) {
+    $project_id = $form_state['node']->og_group_ref['und'][0]['target_id'];
+  }
+  else {
+    $project_id = arg(3);
+  }
+
+  if (is_numeric($project_id)) {
+    // Get all available images for this project, and display only those on form
+    $available_images = views_get_view_result('project_images', 'available_images_block', $project_id);
+    $opts = array();
+    foreach ($available_images as $available_image) {
+      $thumb = $available_image->field_field_image[0]['rendered'];
+      $opts[$thumb['#item']['fid']] = drupal_render($thumb);
+    }
+
+    if (count($opts) < 2) {
+      drupal_set_message('There are not enough available images to make a comparison. Please upload at least two images in order to perform this action.', 'warning');
+      drupal_goto('dashboard/' . $project_id);
+    }
+
+    $form['field_image_references']['und']['#options'] = $opts;
+  }
+  else {
+    drupal_set_message('Please select a project in order to make a comparison.');
+    drupal_goto();
+  }
+}
+
+// Disable manually editing og_group_ref on edit pages. This should only ever
+// be set once. This alter should also be put on a more general module.
+function lighttable_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['nid']) && $form['nid']['#value'] != NULL) {
+    $form['og_group_ref']['#disabled'] = TRUE;
+  }
+}
+
+/**
+ * Returns the HTML of available images view
+ */
+function lighttable_available_images($gid) {
+  if ($gid) {
+    // Is there a way to get just the content and not the exposed filters?
+    $grid_view = views_embed_view('project_images', 'available_images_block', $gid);
+    $list_view = views_embed_view('project_images', 'available_images_list_block', $gid);
+
+    // Send both grid and list views
+    $ret = array('grid' => $grid_view, 'list' => $list_view);
+    print json_encode($ret);
+  }
+  else {
+    print 'Unable to get available images for the current project.';
+  }
+}
+
+/**
+ * Implements hook_form_FORMNAME_alter().
+ */
+function lighttable_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
+  $form['submit']['#type'] = 'image_button';
+  $form['submit']['#src'] = drupal_get_path('module', 'lighttable') . '/images/search.png';
+
+  $form['tid']['#prefix'] = '<div id="filter-toggle"></div>';
+}
+
+function lighttable_views_query_alter(&$view, &$query) {
+  if ($view->name == 'project_images') {
+    // Removes duplicate file images when multiple come from the same node
+    $query->add_where_expression(0, 'file_managed_file_usage.fid = field_data_field_image.field_image_fid');
+  }
+}

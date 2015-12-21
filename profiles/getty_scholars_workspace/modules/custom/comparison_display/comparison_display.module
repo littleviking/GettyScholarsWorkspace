@@ -1,0 +1,14 @@
+<?php
+/**
+ * @file
+ * Code for the Comparison Display feature.
+ */
+
+include_once 'comparison_display.features.inc';
+
+/**
+ * Implements hook_init().
+ */
+function comparison_display_init() {
+  drupal_add_css(drupal_get_path('module', 'comparison_display') . '/comparison_display.css');
+}

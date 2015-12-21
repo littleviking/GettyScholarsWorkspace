@@ -1,0 +1,7 @@
+name = Scribe Text Attacher
+description = Allows annotations to be attached to specific pieces of text.
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = scribe
+dependencies[] = jquery_update

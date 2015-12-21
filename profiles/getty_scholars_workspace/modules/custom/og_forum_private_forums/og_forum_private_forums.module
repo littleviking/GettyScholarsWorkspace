@@ -1,0 +1,550 @@
+<?php
+
+/**
+ * Implements hook_init().
+ */
+function og_forum_private_forums_init() {
+}
+
+function og_forum_private_forums_theme_registry_alter(&$theme_registry) {
+  $mod_path = drupal_get_path('module', 'og_forum_private_forums');
+  $theme_registry_copy = $theme_registry;       // munge on a copy
+  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $mod_path);
+  $theme_registry += array_diff_key($theme_registry_copy, $theme_registry);
+  
+  // Register this module for the forum-list template.
+  $theme_registry['forum_list']['template'] = $mod_path . '/forum-list';
+  $theme_registry['forum_list']['theme path'] = $mod_path;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function og_forum_private_forums_menu() {
+  $items['groups-forums'] = array(
+    'title' => 'Project Forums',
+    'page callback' => 'og_forum_private_forums_page',
+    'access arguments' => array('administer forums'),
+  );
+
+  $items['project/%/forums'] = array(
+    'title' => 'Forum',
+    'page callback' => 'og_forum_private_forums_page',
+    'page arguments' => array(1),
+    'access callback' => 'og_forum_private_forums_access',
+    'access arguments' => array('view group forum list', 1),
+  );
+
+  return $items;
+}
+
+function og_forum_private_forums_page_title($gid) {
+  $title = 'Forum';
+  $forum = forum_forum_load($gid);
+  if (isset($forum->og_group_ref['und'][0]['target_id'])) {
+    $group = node_load($forum->og_group_ref['und'][0]['target_id']);
+    $title = $group->title . ' ' . $title;
+  }
+  return $title;
+}
+
+function og_forum_private_forums_single_forum_page($forum_term) {
+  $gid = _og_forum_private_forums_get_group($forum_term);
+  if ($gid) {
+    return og_forum_private_forums_page($gid, $forum_term);
+  }
+}
+
+
+function og_forum_private_forums_page($gid = NULL, $forum_term = NULL) {
+  global $user;
+  
+  $output = '';
+
+  if (!isset($forum_term)) {
+    $forum_term = forum_forum_load(0);
+  }
+
+  $forums = $forum_term->forums;
+
+  // Add project title to forum list
+  foreach ($forums as $tid => $forum) {
+    $term = taxonomy_term_load($tid);
+    $group_gid = _og_forum_private_forums_get_group($term);
+    if ($group = node_load($group_gid)) {
+        $forums[$tid]->project = $group->title;
+        $forums[$tid]->gid = $group_gid;
+
+        $type = _og_forum_private_forums_get_forum_type($tid);
+        $link = '';
+        if (og_user_access('node', $group_gid, "edit group $type")) {
+          $link .= '<div>' . l(t('edit'), "admin/structure/forum/edit/$type/$tid") . '</div>';
+        }
+        $forums[$tid]->action_link = $link;
+    }
+  }
+
+  // Remove ones that user does not have access to view
+  if (isset($gid)) {
+    foreach ($forums as $tid => $forum) {
+      if (!isset($forums[$tid]->gid)) {
+        $term = taxonomy_term_load($forum->tid);
+        $forums[$tid]->gid = _og_forum_private_forums_get_group($term);
+      }
+
+      if (!$forums[$tid]->gid) {
+        unset($forums[$tid]);
+      }
+      else {
+        if ($gid != NULL && $gid != $forums[$tid]->gid || !og_user_access('node', $gid, 'view group forum list')) {
+          unset($forums[$tid]);
+        }
+      }
+    }
+  }
+
+  $forum_per_page = variable_get('forum_per_page', 25);
+  $sortby = variable_get('forum_order', 1);
+
+  if (empty($forum_term->container)) {
+    $topics = forum_get_topics($forum_term->tid, $sortby, $forum_per_page);
+  }
+  else {
+    $topics = '';
+  }
+
+  $output .= theme('forums', array('forums' => $forums, 'topics' => $topics, 'parents' => $forum_term->parents, 'tid' => $forum_term->tid, 'sortby' => $sortby, 'forums_per_page' => $forum_per_page));
+
+  // Override page title set by Forum module
+  $gid = arg(1);
+  $title = og_forum_private_forums_page_title($gid);
+  drupal_set_title($title);
+
+  if ($output == '') {
+    $output = t('There are currently no containers or forums available for this project.');
+  }
+
+  return $output;
+}
+
+function og_forum_private_forums_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  global $user;
+
+  // Add action link to create appropriate forum content on forum pages
+  if ($root_path == 'forum/%') {
+    $links = array();
+    $tid = arg(1);
+    $type = _og_forum_private_forums_get_forum_type($tid);
+
+    // If this is a container, we want to add a link to add a forum
+    if ($type == 'container') {
+      $term = taxonomy_term_load($tid);
+      $gid = _og_forum_private_forums_get_group($term);
+      
+      $data['actions']['output'] = array(); 
+      if (og_user_access('node', $gid, 'add group forum')) {
+        $links['container'] = array(
+          '#theme' => 'menu_local_action',
+          '#link' => array(
+            'title' => t('Add new forum'),
+            'href' => 'admin/structure/forum/add/forum/' . $gid,
+          ),
+        );
+      }
+    }
+    elseif ($type == 'forum') {
+      $term = taxonomy_term_load($tid);
+      $gid = _og_forum_private_forums_get_group($term);
+      
+      $data['actions']['output'] = array(); 
+      if (og_user_access('node', $gid, 'create forum content')) {
+        $links['container'] = array(
+          '#theme' => 'menu_local_action',
+          '#link' => array(
+            'title' => t('Add new forum topic'),
+            'href' => 'node/add/forum/' . $gid . '/' . $tid,
+          ),
+        );
+      }
+    }
+
+    $data['actions']['output'] = $links;
+  }
+  elseif ($root_path == 'groups-forums') {
+    if (user_access('administer forums')) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => array(
+          'title' => t('Add new forum'),
+          'href' => 'admin/structure/forum/add/forum',
+        ),
+      );
+
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => array(
+          'title' => t('Add new forum topic'),
+          'href' => 'node/add/forum',
+        ),
+      );
+    }
+  }
+  elseif ($root_path == 'project/%/forums') {
+    // Display only links that the user has permission to 
+    $gid = arg(1);
+    if (og_user_access('node', $gid, 'add group forum')) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => array(
+          'title' => t('Add new forum'),
+          'href' => 'admin/structure/forum/add/forum/' . $gid,
+        ),
+      );
+    }
+    if (og_user_access('node', $gid, 'create forum content')) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => array(
+          'title' => t('Add new forum topic'),
+          'href' => 'node/add/forum/' . $gid,
+        ),
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORUM_NODE_FORM_alter().
+ * Unset options that the user does not have access to edit.
+ */
+function og_forum_private_forums_form_forum_node_form_alter(&$form, &$form_state) {
+  $taxonomy_terms = $form['taxonomy_forums']['und']['#options'];
+  foreach ($taxonomy_terms as $tid => $taxonomy_term) {
+    $full_term = taxonomy_term_load($tid);
+    $gid = _og_forum_private_forums_get_group($full_term);
+
+    $type = _og_forum_private_forums_get_forum_type($tid);
+
+    // Remove if this is a container
+    if ($type == 'container' || (is_numeric($tid) && (!$gid))) {
+      unset($form['taxonomy_forums']['und']['#options'][$tid]);
+    }
+  }
+
+  // Now also set the default forum option if it is passed in through the URL
+  $tid = arg(4);
+  if (isset($tid) && is_numeric($tid)) {
+    $form['taxonomy_forums']['und']['#default_value'] = $tid;
+  }
+}
+
+function og_forum_private_forums_form_alter(&$form, &$form_state, $form_id) {
+  // Remove the field that allows users to override visibility
+  if (isset($form['group_content_access'])) {
+    $form['group_content_access']['#access'] = FALSE;
+  }
+
+
+  // Forum forms, where we will require the og_group_ref field
+  $forum_forms = array('forum_form_forum', 'forum_form_container', 'forum_node_form');
+
+  if (in_array($form_id, $forum_forms)) {
+    if (isset($form['og_group_ref']['und'][0]['default'])) {
+      $form['og_group_ref']['und'][0]['default']['#required'] = TRUE;
+    }
+    if (isset($form['weight'])) {
+      $form['weight']['#access'] = FALSE;
+    }
+  }
+}
+
+function og_forum_private_forums_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  if (isset($form['#term'])) {
+    $forum_vocab = taxonomy_vocabulary_load(variable_get('forum_nav_vocabulary', 0));
+    $form_term = (object) $form['#term'];
+    if ($forum_vocab->vid == $form_term->vid) {
+      if (isset($form['og_group_ref']['und'][0]['default'])) {
+        $form['og_group_ref']['und'][0]['default']['#required'] = TRUE;
+      }
+    }
+  }
+}
+
+function og_forum_private_forums_og_permission() {
+  return array(
+    'view group forum list' =>  array(
+      'title' => t('View forum list'),
+      'description' => t('View list of forums for this group'),
+    ),
+    'add group forum' =>  array(
+      'title' => t('Add new forums'),
+      'description' => t('Add new forums for this group'),
+    ),
+    'add group container' =>  array(
+      'title' => t('Add new forum container'),
+      'description' => t('Add new forum containers for this group'),
+    ),
+    'edit group forum' =>  array(
+      'title' => t('Edit forums'),
+      'description' => t('Edit forums for this group'),
+    ),
+    'edit group container' =>  array(
+      'title' => t('Edit forum container'),
+      'description' => t('Edit forum containers for this group'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function og_forum_private_forums_menu_alter(&$items) {
+  $items['admin/structure/forum'] = array(
+    'title' => 'Project Forums',
+    'description' => 'Control forum hierarchy settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('forum_overview'),
+    'access callback' => 'og_forum_private_forums_access',
+    'access arguments' => array('add group forum', 3),
+    'file' => 'forum.admin.inc',
+    'file path' => drupal_get_path('module', 'forum'),
+  );
+
+  $items['admin/structure/forum/add/forum'] = array(
+    'title' => 'Add forum',
+    'page callback' => 'forum_form_main',
+    'page arguments' => array('forum'),
+    'access callback' => 'og_forum_private_forums_access',
+    'access arguments' => array('add group forum', 5),
+    'type' => MENU_LOCAL_ACTION,
+    'parent' => 'admin/structure/forum',
+    'file' => 'forum.admin.inc',
+    'file path' => drupal_get_path('module', 'forum'),
+  );
+
+  $items['admin/structure/forum/add/container'] = array(
+    'title' => 'Add container',
+    'page callback' => 'forum_form_main',
+    'page arguments' => array('container'),
+    'access callback' => 'og_forum_private_forums_access',
+    'access arguments' => array('add group container', 5),
+    'type' => MENU_LOCAL_ACTION,
+    'parent' => 'admin/structure/forum',
+    'file' => 'forum.admin.inc',
+    'file path' => drupal_get_path('module', 'forum'),
+  );
+
+  $items['admin/structure/forum/edit/container/%taxonomy_term'] = array(
+    'title' => 'Edit container',
+    'page callback' => 'forum_form_main',
+    'page arguments' => array('container', 5),
+    'access callback' => 'og_forum_private_forums_access',
+    'access arguments' => array('edit group container', NULL, 5),
+    'file' => 'forum.admin.inc',
+    'file path' => drupal_get_path('module', 'forum'),
+  );
+
+  $items['admin/structure/forum/edit/forum/%taxonomy_term'] = array(
+    'title' => 'Edit forum',
+    'page callback' => 'forum_form_main',
+    'page arguments' => array('forum', 5),
+    'access callback' => 'og_forum_private_forums_access',
+    'access arguments' => array('edit group forum', NULL, 5),
+    'file' => 'forum.admin.inc',
+    'file path' => drupal_get_path('module', 'forum'),
+  );
+
+  $items['forum/%forum_forum'] = array(
+    'title' => 'Project Forums',
+    // 'title callback' => 'lighttable_page_title_callback',
+    'page callback' => 'og_forum_private_forums_single_forum_page',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+  );
+}
+
+function og_forum_private_forums_enable() {
+    db_update('system')
+    ->fields(array('weight' => 1))
+    ->condition('type', 'module')
+    ->condition('name', 'og_forum_private_forums')
+    ->execute();
+}
+
+function og_forum_private_forums_access($string = NULL, $gid = NULL, $term = NULL) {
+  if (isset($term)) {
+    $gid = _og_forum_private_forums_get_group($term);
+  }
+
+  if (isset($string) && $gid && is_numeric($gid)) {
+    return og_user_access('node', $gid, $string);
+  }
+  
+  return user_access('administer forums');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the OG fields on forum form
+ */
+function og_forum_private_forums_form_forum_form_forum_alter(&$form, &$form_state) {
+  _og_forum_private_forums_term_form_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the OG fields on container form.
+ */
+function og_forum_private_forums_form_forum_form_container_alter(&$form, &$form_state) {
+  _og_forum_private_forums_term_form_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Change links in confirm form.
+ */
+function og_forum_private_forums_form_forum_confirm_delete_alter(&$form, &$form_state) {
+  // Add function to run first to get gid of forum being deleted
+  array_unshift($form['#submit'], 'og_forum_private_forums_forums_forum_submit_get_gid');
+  // Redirect to correct page
+  $form['#submit'][] = 'og_forum_private_forums_forums_forum_submit';
+  
+  $form['description']['#markup'] = t('Deleting a forum or container will also delete its sub-forums, if any. This action cannot be undone.');
+  $form['actions']['cancel']['#href'] = $_GET['q'];
+}
+
+/**
+ * Implements hook_form_alter().
+ * 
+ * Remove terms the user does not have access to, based on group permissions.
+ */
+function og_forum_private_forums_form_forum_overview_alter(&$form, &$form_state) {
+  foreach ($form as $key => $value) {
+    $pattern = '/tid:[0-9]+:[0-9]+/';
+    if (preg_match($pattern, $key)) {
+      if (isset($value['#term']['tid'])) {
+        $term = taxonomy_term_load($value['#term']['tid']);
+      }
+
+      if (isset($term)) {
+        $gid = _og_forum_private_forums_get_group($term);
+        $url_gid = arg(3);
+
+        $string = t('edit group @type', array('@type' => _og_forum_private_forums_get_forum_type($term->tid)));
+
+        // If a gid is passed in through the url, then only display items for that project.
+        // Otherwise, check edit permissions for the group.
+        if ((isset($url_gid) && $gid != $url_gid) || ($gid && !og_user_access('node', $gid, $string))) {
+          unset($form[$key]);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Add the OG fields on the current taxonomy_term form.
+ */
+function _og_forum_private_forums_term_form_alter(&$form, &$form_state) {
+  // Remove parent options that the user does not have access to
+  $parent_options = $form['parent'][0]['#options'];
+  foreach ($parent_options as $tid => $parent_option) {
+    $term = taxonomy_term_load($tid);
+    if (isset($term->og_group_ref)) {
+      $type = arg(4);
+      if (!og_user_access('node', $term->og_group_ref['und'][0]['target_id'], 'add group ' . $type)) {
+        unset($form['parent'][0]['#options'][$tid]);
+      }
+    }
+  }
+
+  $term = new stdClass();
+  $vocabulary = taxonomy_vocabulary_load($form['vid']['#value']);
+
+  if (isset($form['tid']['#value'])) {
+    $term = taxonomy_term_load($form['tid']['#value']);
+  }
+  else {
+    $defaults = array(
+      'name' => '',
+      'description' => '',
+      'format' => NULL,
+      'vocabulary_machine_name' => $vocabulary->machine_name,
+      'tid' => NULL,
+      'weight' => 0,
+    );
+    foreach ($defaults as $key => $value) {
+      $term->$key = $value;
+    }
+  }
+
+  field_attach_form('taxonomy_term', $term, $form, $form_state);
+
+  if (isset($form['og_group_ref']['und'][0]['default'])) {
+    $form['og_group_ref']['und'][0]['default']['#required'] = TRUE;
+  }
+
+  // Check default group
+  $gid = arg(5);
+  if (isset($gid) && is_numeric($gid)) {
+    _og_forum_private_forums_set_group($gid, $form);
+  }
+
+  // Add submit handler that will redirect them to groups forum page
+  array_unshift($form['#submit'], 'og_forum_private_forums_forums_forum_submit_get_gid');
+  $form['#submit'][] = 'og_forum_private_forums_forums_forum_submit';
+}
+
+function og_forum_private_forums_forums_forum_submit_get_gid($form, &$form_state) {
+  if (isset($form_state['values']['og_group_ref']['und'][0])) {
+    $gid = $form_state['values']['og_group_ref']['und'][0]['target_id'];
+  }
+  elseif (isset($form['tid'])) {
+    $tid = $form['tid']['#value'];
+    $term = taxonomy_term_load($tid);
+    $gid = _og_forum_private_forums_get_group($term);
+  }
+
+  if (isset($gid) && is_numeric($gid)) {
+      $form_state['values']['gid'] = $gid;
+  }
+}
+
+function og_forum_private_forums_forums_forum_submit($form, &$form_state) {
+  if (isset($form_state['values']['gid'])) {
+    $form_state['redirect'] = 'project/' . $form_state['values']['gid'] . '/forums';
+  }
+}
+
+function og_forum_private_forums_forum_confirm_delete_submit($form, &$form_state) {
+  $gid = $form_state['values']['og_group_ref']['und'][0]['target_id'];
+  $form_state['redirect'] = 'groups-forums/' . $gid;
+}
+
+function _og_forum_private_forums_set_group($gid, &$form) {
+  if (is_numeric($gid) && og_is_member('node', $gid)) {
+    if (isset($form['og_group_ref']['und'][0]['default'])) 
+      $form['og_group_ref']['und'][0]['default']['#default_value'] = $gid;
+  }
+}
+
+function _og_forum_private_forums_get_group($term) {
+  if (isset($term->og_group_ref['und'])) {
+    $gid = $term->og_group_ref['und'][0]['target_id'];
+    return $gid;
+  }
+
+  return FALSE;
+}
+
+function _og_forum_private_forums_get_forum_type($tid) {
+  if (in_array($tid, variable_get('forum_containers', array()))) {
+    return 'container';
+  }
+  else {
+    return 'forum';
+  }
+}

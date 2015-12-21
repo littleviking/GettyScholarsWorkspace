@@ -1,0 +1,79 @@
+<?php
+
+include_once("inc/array2xml.php");
+
+
+/**
+ *  Implements hook_menu().
+ */
+function getty_expose_project_menu() {
+  $items = array();
+  
+  $handler = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_getty_expose_project_url_handler',
+    'page arguments' => array(2),
+    'access callback' => '_getty_expose_project_access_handler',
+  );
+  
+  //add admin config form
+  $items['admin/config/getty-expose'] = array(
+    'title' => t('Getty - Expose Project Configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('getty_expose_project_admin_form'),
+    'file' => 'getty_expose_project.admin.inc',
+    'file path' => drupal_get_path('module', 'getty_expose_project') . '/forms',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM
+  );
+
+  $project_path = variable_get('getty_expose_project_service_url', 'service/projects');
+  if (!empty($project_path)) {
+    $items[$project_path] = $items[$project_path . '/%'] = $handler;
+  }
+
+  return $items;
+}
+
+/**
+ *  @function:
+ *    custom access callback that checks if content type is 
+ */
+function _getty_expose_project_access_handler() {
+  //checks if user has access and then return
+  $status = user_access('access project service');
+  return $status;
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function getty_expose_project_permission() {
+  return array(
+    //allows users to download the files
+    'access project service' => array(
+      'title' => t('Access To Getty Project Service'),
+      'description' => t('Allow users to access project service')
+    )
+  );
+}
+
+/**
+ *  @function:
+ *    This function is a custom handler for oembed requests
+ */
+function _getty_expose_project_url_handler($format = '') {
+  $requested_url = (isset($_GET['url'])) ? $_GET['url'] : '';
+  $project_id = (isset($_GET['project'])) ? $_GET['project'] : '';
+  
+  //defaults which formart to use if none is provided
+  if (empty($format)) {
+    $format = empty($_GET['format']) ? 'json' : $_GET['format'];
+  }
+  
+  //creates new object and echos the output out
+  $project = new getty_project($project_id, $format);
+  echo $project->get_output();
+  
+  drupal_exit();
+}

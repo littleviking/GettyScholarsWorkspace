@@ -1,0 +1,48 @@
+<?php
+/**
+ * Implements hook_menu().
+ */
+function bibliography_plugin_menu() {
+  $items['bibliography-reference/list/%'] = array(
+    'title' => 'Bibliography Items',
+    'title callback' => 'bibliography_plugin_page_title_callback',
+    'page callback' => 'bibliography_plugin_list',
+    'page arguments' => array(2),
+    'access callback' => 'bibliography_plugin_access_comparison',
+    'access arguments' => array(2),
+  );
+
+  return $items;
+}
+
+function bibliography_plugin_page_title_callback($title) {
+  $gid = arg(2);
+  $group = node_load($gid);
+
+  return $group->title . ' ' . $title;
+}
+
+/**
+ * Ensure user has access to node's project
+ */
+function bibliography_plugin_access_comparison($gid) {
+  if (og_is_member('node', $gid)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
+
+function bibliography_plugin_list($gid) {
+  drupal_add_js(drupal_get_path('module', 'bibliography_plugin') . '/plugins/bibliography_reference/js/bibliography_reference_popup.js');
+  drupal_add_css(drupal_get_path('module', 'bibliography_plugin') . '/plugins/bibliography_reference/bibliography_reference.css');
+
+  $bibliography_items = views_embed_view('bibliography_reference', 'bibliography_items_block', $gid);
+  return $bibliography_items;
+}
+
+function bibliography_plugin_wysiwyg_include_directory($type) {
+  return $type;
+}

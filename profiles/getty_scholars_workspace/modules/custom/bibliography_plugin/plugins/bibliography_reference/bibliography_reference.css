@@ -1,0 +1,21 @@
+#admin-menu,
+#section-header {
+  display: none;
+}
+
+body.page-bibliography-reference.admin-menu {
+  margin-top: 0 !important;
+}
+
+body.page-bibliography-reference #section-content {
+  padding-top: 0;
+}
+
+.views-row {
+  cursor: pointer;
+}
+
+h1.title {
+  font-size: 18px;
+  margin-bottom: 10px;
+}

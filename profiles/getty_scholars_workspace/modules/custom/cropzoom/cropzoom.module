@@ -1,0 +1,361 @@
+<?php
+/**
+ * @file
+ * Integrates cropzoom library with image fields, and allows for saving crops.
+ */
+
+module_load_include('inc', 'cropzoom', 'cropzoom.field');
+
+/**
+ * Implements hook_init().
+ */
+function cropzoom_init() {
+  // Add basepath variable to JS
+  $cz_settings = array('basepath' => base_path());
+  drupal_add_js(array('cropzoom' => $cz_settings), 'setting');
+  // dpm($cz_settings);
+  
+  drupal_add_library('system', 'ui');
+  drupal_add_library('system', 'ui.droppable');
+  drupal_add_library('system', 'ui.resizable');
+  drupal_add_library('system', 'ui.slider');
+  drupal_add_library('system', 'ui.dialog');
+
+  drupal_add_js(drupal_get_path('module', 'cropzoom') . '/js/jquery.cropzoom.js');
+  drupal_add_js(drupal_get_path('module', 'cropzoom') . '/js/cropzoom.js');
+  drupal_add_js(drupal_get_path('module', 'cropzoom') . '/js/spin.min.js');
+  drupal_add_js(array('cropzoom' => array('path' =>  drupal_get_path('module', 'cropzoom'))), 'setting');
+
+  drupal_add_css(drupal_get_path('module', 'cropzoom') . '/cropzoom.css');
+}
+
+/**
+ * Implements hook_user_default_permissions().
+ */
+function cropzoom_user_default_permissions() {
+  $permissions = array();
+
+  // Exported permission: access cropzoom.
+  $permissions['access cropzoom'] = array(
+    'name' => 'access cropzoom',
+    'roles' => array(
+      'group administrator' => 'group administrator',
+      'research assistant' => 'research assistant',
+      'scholar' => 'scholar',
+      'system administrator' => 'system administrator',
+    ),
+    'module' => 'cropzoom',
+  );
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_og_permission().
+ */
+function cropzoom_og_permission() {
+  return array(
+    'access cropzoom' =>  array(
+      'title' => t('Access Crop and Zoom feature'),
+      'description' => t('Access the Crop and Zoom functionality'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function cropzoom_theme() {
+  return array(
+    'cropzoom_image_formatter' => array(
+      'variables' => array('item' => NULL, 'path' => NULL, 'image_style' => NULL, 'enable_cropzoom' => NULL),
+    ),
+    'cropzoom_display' => array(
+      'template' => 'cropzoom-display',
+      'variables' => array('czid' => NULL, 'nid' => NULL, 'fid' => NULL, 'gid' => NULL, 'image_output' => NULL),
+    ),
+    'cropzoom_container_display' => array(
+      'template' => 'cropzoom-container-display',
+      'variables' => array('nid' => NULL, 'fid' => NULL, 'image_container' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function cropzoom_menu() {
+  $items['cropzoom/crop/%'] = array(
+    'page callback' => 'cropzoom_crop',
+    'access callback' => 'cropzoom_user_access',
+    'access arguments' => array('access cropzoom', 2),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['cropzoom/create/%'] = array(
+    'page callback' => 'cropzoom_create_node',
+    'page arguments' => array(2),
+    'access callback' => 'cropzoom_user_access',
+    'access arguments' => array('access cropzoom', 2),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function cropzoom_user_access($perm, $gid) {
+  return ($gid && og_user_access('node', $gid, $perm));
+}
+
+function cropzoom_form_alter(&$form, &$form_state, $form_id) {
+  // Disable manually editing field_original_node. This should only ever be set
+  // by the CropZoom module.
+  if (isset($form['field_original_node'])) {
+    $form['field_original_node']['#disabled'] = TRUE;
+  }
+}
+
+function cropzoom_crop() {
+  // imagesource usually ends in ?itok=...., which we will need to remove in 
+  // order to get the correct extension
+  $img_src = $_POST['imageSource'];
+  if ($pos = strpos($img_src, '?itok')) {
+    $img_src = substr($img_src, 0, $pos);
+  }
+
+  list($width, $height) = getimagesize($img_src);
+  $p_width = $_POST['imageW'];
+  $p_height =  $_POST['imageH'];
+  $source_parts = explode('.', $img_src);
+  $ext = end($source_parts);
+  $function = _cropzoom_get_function($ext);
+  $image = $function($img_src);
+  $width = imagesx($image);
+  $height = imagesy($image);
+  // Resample
+  $image_p = imagecreatetruecolor($p_width, $p_height);
+  _cropzoom_set_transparency($image, $image_p, $ext);
+  imagecopyresampled($image_p, $image, 0, 0, 0, 0, $p_width, $p_height, $width, $height);
+  imagedestroy($image);
+  // $width_r = imagesx($image_p);
+  // $height_r = imagesy($image_p);'
+  $selector_x = $_POST['selectorX'];
+  $selector_y = $_POST['selectorY'];
+
+  $dst_x = $src_x = $dst_y = $src_y = 0;
+
+  if ($_POST['imageX'] > 0) {
+    $dst_x = abs($_POST['imageX']);
+  }
+  else {
+    $src_x = abs($_POST['imageX']);
+  }
+
+  if ($_POST['imageY'] > 0) {
+    $dst_y = abs($_POST['imageY']);
+  }
+  else {
+    $src_y = abs($_POST['imageY']);
+  }
+
+  $viewport = imagecreatetruecolor($_POST['viewPortW'], $_POST['viewPortH']);
+  _cropzoom_set_transparency($image_p, $viewport, $ext);
+
+  imagecopy($viewport, $image_p, $dst_x, $dst_y, $src_x, $src_y, $p_width, $p_height);
+  imagedestroy($image_p);
+
+  $selector = imagecreatetruecolor($_POST['selectorW'], $_POST['selectorH']);
+  _cropzoom_set_transparency($viewport, $selector, $ext);
+  $copied = imagecopy($selector, $viewport, 0, 0, $selector_x, $selector_y, $_POST['viewPortW'], $_POST['viewPortH']);
+
+  // Create image in files folder
+  if ($copied) {
+    $public = variable_get('file_public_path', 'sites/default/files');
+    $tm = time();
+    $file = $public . '/cropzoom-' . $tm . '.' . $ext;
+    $result = _cropzoom_parse_image($ext, $selector, $file);
+
+    if ($result) {
+      imagedestroy($viewport);
+      echo $tm . '/' . $ext;
+    }
+    else {
+      echo '0';
+    }
+  }
+  else {
+    echo '0';
+  }
+}
+
+function cropzoom_create_node($gid) {
+  global $base_url;
+  global $user;
+
+  // Get variables from post
+  $ts = $_POST['ts'];
+  $ext = $_POST['ext'];
+
+  // if (isset($_POST['nid'])) {
+  $nid = $_POST['nid'];
+  $orig_node = node_load($nid);
+  // }
+
+  if (isset($_POST['type'])) {
+    $specified_type = TRUE;
+    $type = $_POST['type'];
+  }
+  else {
+    $specified_type = FALSE;
+    $type = $orig_node->type;
+  }
+
+  // First, create file
+  $public = variable_get('file_public_path', 'sites/default/files');
+  $fh = file_get_contents($public . '/cropzoom-' . $ts . '.' . $ext);
+  $file = file_save_data($fh, 'public://cropzoom-' . $ts . '.' . $ext, FILE_EXISTS_REPLACE);
+
+
+  if ($file->filesize) {
+    // Create new node
+    $new_node = new stdClass();
+    $new_node->language = LANGUAGE_NONE;
+    $new_node->uid = $user->uid;
+
+    $new_node->field_image[LANGUAGE_NONE][0] = (array) $file;
+    
+    // If comment module is enabled, then set the new node's comment status
+    if (module_exists('comment')) {
+      $new_node->comment = variable_get('comment_' . $type, COMMENT_NODE_OPEN);
+    }
+
+    if (isset($orig_node)) {
+      $new_node->type = $type;
+      $new_node->title = $orig_node->title . ' Crop';
+
+      // Also set group
+      if (isset($orig_node->og_group_ref['und'])) {
+        foreach ($orig_node->og_group_ref['und'] as $group) {
+          $new_node->og_group_ref['und'][] = $group;
+        }
+      }
+      // Also set tags
+      if (isset($orig_node->field_tags['und'])) {
+        foreach ($orig_node->field_tags['und'] as $tag) {
+          $new_node->field_tags['und'][] = $tag;
+        }
+      }
+
+      if (module_exists('image_field_caption')) {
+        if (isset($orig_node->field_image['und'][0]['image_field_caption'])) {
+          $new_node->field_image['und'][0]['image_field_caption'] = $orig_node->field_image['und'][0]['image_field_caption'];
+          // Add "(crop)" to caption of cropped images
+          $new_node->field_image['und'][0]['image_field_caption']['value'] = _cropzoom_append_crop($new_node->field_image['und'][0]['image_field_caption']['value']);
+        }
+        else {
+          $new_node->field_image['und'][0]['image_field_caption'] = array('value' => '', 'format' => variable_get('filter_fallback_format', 'plain_text'));
+        }
+      }
+      
+      // Invoke hook function so that other modules can add their own fields
+      drupal_alter('cropzoom_copy_node', $orig_node, $new_node, $file, $gid);
+    }
+
+    if (!$specified_type) {
+      $new_node->field_original_node[LANGUAGE_NONE][0]['target_id'] = $orig_node->nid;
+    }
+
+    // Save the node, then go to its edit page
+    node_save($new_node);
+
+    // Send both new file ID and new nid
+    $ret = array('nid' => $new_node->nid, 'fid' => $file->fid);
+    
+    print json_encode($ret);
+  }
+  else {
+    file_delete($file);
+    print '0';
+  }
+}
+
+function _cropzoom_get_function($ext) {
+  $function = '';
+  switch ($ext) {
+    case 'png':
+      $function = 'imagecreatefrompng';
+      break;
+    case 'jpeg':
+      $function = 'imagecreatefromjpeg';
+      break;
+    case 'jpg':
+      $function = 'imagecreatefromjpeg';
+      break;
+    case 'gif':
+      $function = 'imagecreatefromgif';
+      break;
+  }
+  return $function;
+}
+
+function _cropzoom_parse_image($ext, $img, $file = NULL) {
+  switch ($ext) {
+    case 'png':
+      return imagepng($img, $file, 9);
+      break;
+    case 'jpeg':
+    case 'jpg':
+      return imagejpeg($img, $file, 90);
+      break;
+    case 'gif':
+      return imagegif($img, $file);
+      break;
+  }
+}
+
+function _cropzoom_set_transparency($img_src, $img_dest, $ext) {
+  if ($ext == 'png' || $ext == 'gif') {
+    $trnprt_indx = imagecolortransparent($img_src);
+    // If we have a specific transparent color
+    if ($trnprt_indx >= 0) {
+      // Get the original image's transparent color's RGB values
+      $trnprt_color    = imagecolorsforindex($img_src, $trnprt_indx);
+      // Allocate the same color in the new image resource
+      $trnprt_indx    = imagecolorallocate($img_dest, $trnprt_color['red'], $trnprt_color['green'], $trnprt_color['blue']);
+      // Completely fill the background of the new image with allocated color.
+      imagefill($img_dest, 0, 0, $trnprt_indx);
+      // Set the background color for new image to transparent
+      imagecolortransparent($img_dest, $trnprt_indx);
+    }
+    // Always make a transparent background color for PNGs that don't have one allocated already
+    elseif ($ext == 'png') {
+      // Turn off transparency blending (temporarily)
+      imagealphablending($img_dest, TRUE);
+      // Create a new transparent color for image
+      $color = imagecolorallocatealpha($img_dest, 0, 0, 0, 127);
+      // Completely fill the background of the new image with allocated color.
+      imagefill($img_dest, 0, 0, $color);
+      // Restore transparency blending
+      imagesavealpha($img_dest, TRUE);
+    }
+  }
+}
+
+function _cropzoom_append_crop($txt) {
+  // search for an html closing tag
+  $pattern = '/<\/[a-z0-9]+>/';
+  preg_match_all($pattern, $txt, $matches, PREG_OFFSET_CAPTURE);
+  
+  if (count($matches)) {
+    $matches = current($matches);
+    // we only need the last closing tag
+    $last_match = $matches[count($matches) - 1];
+    // append '(crop)' before the last closing tag
+    $txt = substr($txt, 0, $last_match[1]) . ' (crop)' . $last_match[0];
+  }
+  else {
+    $txt .= ' (crop)';
+  }
+
+  return $txt;
+}

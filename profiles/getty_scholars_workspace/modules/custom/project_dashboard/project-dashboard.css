@@ -1,0 +1,200 @@
+.page-dashboard .flexslider {
+  margin-bottom: 25px;
+}
+
+#dashboard-title {
+  text-align: center;
+  font-size: 30px;
+}
+
+/* Dashboard main view displays */
+#dashboard-main {
+  float: left;
+  width: 48%;
+  margin-top: 1%;
+    color: #646f81;
+}
+#dashboard-main h2, #dashboard-recent h2 {
+    font-weight:normal;
+}
+
+#dashboard-recent {
+  float: right;
+  width: 48%;
+  margin-top: 1%;
+    color: #646f81;
+}
+
+/* Dashboard toolbar */
+.branding-data {
+    float: left;
+}
+.block-project-dashboard-project-toolbar {
+    float: left;
+    margin-top: 16px;
+}
+
+/*** Start "Action" Menu dropdown GETTY-178 ***/
+#dashboard-toolbar a, #zone-preface a {
+  text-decoration: none;
+}
+
+#dashboard-toolbar a:hover,
+#zone-preface a:hover {
+  /* text-decoration: underline; */
+}
+
+#dashboard-toolbar .dashboard-submenu,
+#zone-preface .dashboard-submenu {
+  border: solid 0px #646F81;
+}
+
+#dashboard-toolbar .dashboard-submenu a,
+#zone-preface .dashboard-submenu > a {
+  color:#fff;
+  text-decoration:none;
+}
+
+#dashboard-toolbar .dashboard-submenu a:hover,
+#zone-preface .dashboard-submenu > a:hover {
+  background-color:#1F2531;
+  color:#fff;
+  text-decoration:none;
+}
+
+#dashboard-toolbar .dashboard-link,
+#zone-preface .dashboard-link {
+  display: inline-block;
+}
+
+#dashboard-toolbar #create-content,
+#zone-preface #create-content {
+  display: inline;
+  float: left;
+  margin-right:15px;
+}
+
+#dashboard-toolbar .dashboard-submenu,
+#zone-preface .dashboard-submenu {
+  visibility:hidden;
+  position: absolute;
+  top: 30px;
+  left: 10px;
+  background-color: #646F81;
+  z-index: 5;
+    min-width: 160px;
+border:4px solid #7c889a;
+}
+#dashboard-toolbar .dashboard-submenu.open {
+    visibility:visible
+}
+
+/* Ideally there would be a dashboard-submenu-link-first
+ * like there is a dashboard-submenu-link-last for now I used a
+ * pseudo selector
+ */
+
+.dashboard-submenu-link:first-child {
+}
+
+.dashboard-submenu-link > a {
+  display:block;
+  padding:10px 35px 10px 15px;
+}
+
+#dashboard-toolbar .dashboard-submenu .dashboard-submenu-link,
+#zone-preface .dashboard-submenu .dashboard-submenu-link {
+
+  display: block;
+}
+
+#dashboard-toolbar .dashboard-submenu .dashboard-submenu-link-last,
+#zone-preface .dashboard-submenu .dashboard-submenu-link:last-child {
+  border-bottom: solid 1px #000;
+}
+
+#dashboard-toolbar .dashboard-link,
+#zone-preface .dashboard-link {
+  cursor: pointer;
+}
+
+#dashboard-toolbar .dashboard-toolbar-right {
+  position: absolute;
+  top: 12px;
+  right: 0;
+}
+
+#dashboard-toolbar #my-projects,
+#dashboard-toolbar #content-links,
+#zone-preface #my-projects,
+#zone-preface #content-links,
+#manage-members{
+  display: inline-block;
+  position: relative;
+}
+
+#dashboard-toolbar #content-links
+#zone-preface #content-links {
+  display: block;
+  margin: 0 auto;
+  width: 380px;
+}
+
+#dashboard-toolbar #content-links .dashboard-link:last-of-type a {
+  margin-right: inherit;
+}
+
+/* User Projects toolbar */
+.view-id-og_user_projects .slides {
+  padding: 10px 1px;
+}
+
+.view-id-og_user_projects .views-row {
+  margin:0 0 0 15px;
+  border: solid 1px #9E9E9E;
+  position: relative;
+  width: 111px;
+  height: 100px;
+}
+.view-id-og_user_projects .views-row:first-child {
+    margin:0;
+}
+
+.view-id-og_user_projects .views-row .views-field-title {
+  position: relative;
+  top: 35px;
+}
+.view-id-og_user_projects .views-row .views-field-title a {
+    color: #646F81;
+}
+#region-preface-third .form-item-text {
+  display: inline;
+}
+
+#region-preface-third .form-item-text,
+#region-preface-third .form-text {
+  width: 100px;
+}
+
+.dashboard-current-project-name {
+  font-size: 16px;
+}
+
+#dashboard-description {
+  width: 75%;
+  float: left;
+}
+
+#dashboard-description {
+  display: none;
+}
+
+body.not-project-dashboard .project-desc {
+    display:none;
+}
+body.not-project-dashboard .new-project-image {
+    display:none;
+}
+#project-node-form #edit-field-image-references {
+    display:none;
+}

@@ -1,0 +1,11 @@
+.side-by-side-row .original, .side-by-side-row .clone {
+  box-sizing: border-box;
+  float: left;
+  /*overflow: auto;*/
+  padding: 10px;
+  width: 50%;
+}
+.side-by-side-row .original { padding-left: 0; }
+.side-by-side-row .clone { padding-right: 0; }
+.side-by-side-row img { width: 100%; height: auto; }
+.side-by-side-row  .file img { display: none; }

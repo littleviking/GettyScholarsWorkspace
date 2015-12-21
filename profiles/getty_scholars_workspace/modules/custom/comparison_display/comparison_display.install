@@ -1,0 +1,14 @@
+<?php 
+
+/**
+ * Update all files with undefined types.
+ *
+ * For example, an png image with filemime 'image/png' will be assigned a file
+ * type of 'image'.
+ */
+function comparison_display_install() {
+  db_update('file_managed')
+    ->expression('type', "SUBSTRING_INDEX(filemime, '/', 1)")
+    ->condition('type', 'undefined')
+    ->execute();
+}

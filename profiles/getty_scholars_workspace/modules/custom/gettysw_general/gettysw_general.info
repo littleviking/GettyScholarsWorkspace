@@ -1,0 +1,4 @@
+name = Getty SW General
+description = "General GettySW functions."
+core = 7.x
+package = Getty Scholars' Workspace

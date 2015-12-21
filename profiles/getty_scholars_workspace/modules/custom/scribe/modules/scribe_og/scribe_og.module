@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * Implements hook_scribe_entity_access().
+ */
+function scribe_og_scribe_entity_access($op, $entity = NULL, $account = NULL, $entity_type = '') {
+  // We want to see if the user has access to the main group content
+  // If they do then the permissions flow forth from there
+  //
+  // We have three scenarios, we're interested in an annotation, so
+  // we load the root content it's attached to.  This happens when a user
+  // wants to make a reply (create a new annotation), edit an annotation,
+  // or delete an annotation.
+  //
+  // We have an attachment in that case we can directly get to it's content.
+  // This happens in the case when we want to delete an attachment.
+  //
+  // Otherwise we have something else, this would mean a field on an entity
+  // type has been makred as being annotatable.  This happens in the context
+  // of creating a new attachment.
+  if ($op == 'view' || $op == 'create') {
+    return;
+  }
+  if ($entity_type == 'scribe_annotation') {
+    // A note here
+    // The attachment to the parent entity must exist already or this
+    // will fail.
+    $entity_info = scribe_annotation_load_parent_entity($entity);
+    $annotated_entity = $entity_info['entity'];
+    $annotated_entity_type = $entity_info['entity_type'];
+    $annotated_entity_id = $entity_info['entity_id'];
+  }
+  else if ($entity_type == 'scribe_attachment') {
+    // Otherwise we're dealing with a scribe_attachment
+    $entities = entity_load($entity->entity_type, array($entity->entity_id));
+    $annotated_entity = reset($entities);
+    $annotated_entity_type = $entity->entity_type;
+    $annotated_entity_id = $entity->entity_id;
+  }
+  else {
+    $annotated_entity = $entity->object;
+    $annotated_entity_type = $entity->entity_type;
+    $annotated_entity_id = $entity->entity_id;
+
+    // We overwrite the entity type with the annotation type
+    // it's really just a convenience
+    $entity_type = $entity->annotation_type;
+    $entity = $entity->object;
+  }
+
+  // If the given entity is not placed into any organic group then
+  // go back to default permissions
+  if (!isset($annotated_entity->og_group_ref) || empty($annotated_entity->og_group_ref)) {
+    return;
+  }
+
+  // Get the correct access string and then return the necessary permissions
+  $access_string = scribe_format_access_string($op, $entity, $account);
+  $access = og_user_access_entity($access_string, $annotated_entity_type, $annotated_entity, $account);
+
+  return $access;
+}
+
+/**
+ * Implements hook_og_permission().
+ */
+function scribe_og_og_permission() {
+  return scribe_permission();
+}

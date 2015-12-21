@@ -1,0 +1,48 @@
+<?php
+
+/**
+ * Implements hook_scribe_attacher_info().
+ */
+function scribe_image_attacher_scribe_attacher_info() {
+  $attachers['image'] = array(
+    'label' => 'Scribe Image Attacher',
+    'description' => 'This attacher allows annotations to be attached to image fields.',
+    'metadata table' => 'scribe_image_metadata',
+    'field types' => array(
+      'image',
+    ),
+    'library' => array(
+      'module' => 'scribe_image_attacher',
+      'name' => 'image-annotator',
+    ),
+  );
+
+  return $attachers;
+}
+
+/**
+ * Implements hook_library().
+ *
+ * TODO: Switch to libraries API.
+ * FIXME: Remove dpendency on text attacher module. Should resolve itself when
+ * switching to libraries API.
+ */
+function scribe_image_attacher_library() {
+  $module_path = drupal_get_path('module', 'scribe_image_attacher');
+
+  $libraries['image-annotator'] = array(
+    'title' => 'Image Annotator',
+    'version' => '0.3',
+    'js' => array(
+      $module_path . '/js/drupal_store_image.js' => array('scope' => 'footer'),
+      $module_path . '/js/imagecanvas.js' => array('scope' => 'footer'),
+      $module_path . '/js/image.js' => array('scope' => 'footer'),
+      $module_path . '/js/scribe-image-annotator.js' => array('scope' => 'footer'),
+    ),
+    'dependencies' => array(
+      array('scribe_text_attacher', 'annotator'),
+    ),
+  );
+
+  return $libraries;
+}

@@ -1,0 +1,15 @@
+name = Getty SW WYSIWYG
+description = Profiles and configurations for WYSIWYG
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = features
+dependencies[] = filter
+dependencies[] = footnotes
+dependencies[] = wysiwyg
+features[features_api][] = api:2
+features[filter][] = filtered_html
+features[filter][] = full_html
+features[filter][] = plain_text
+features[wysiwyg][] = filtered_html
+features[wysiwyg][] = full_html

@@ -1,0 +1,41 @@
+<?php
+/**
+ * @file
+ * Code for the Getty Manuscript feature.
+ */
+
+include_once 'manuscript_node.features.inc';
+
+function manuscript_node_field_widget_form_alter(&$element, &$form_state, $context) {
+  if ($context['instance']['field_name'] == 'field_facsimile') {
+    $children = element_children($element);
+    foreach ($children as $delta) {
+      $element[$delta]['#process'][] = '_image_field_deepzoom_preview';
+    }
+  }
+}
+
+function _image_field_deepzoom_preview($element, &$form_state, $form) {
+  drupal_add_css(drupal_get_path('module', 'manuscript_node') . '/manuscript_node.css');
+  if (!empty($element['preview']) && !empty($element['#file']->uri)) {
+    $element['preview']['#markup'] = '';
+    $element['preview'][] = theme('deepzoom', array(
+      'images' => $element['#file']->uri,
+      'image_style' => 'large',
+    ));
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_views_pre_view().
+ */
+function manuscript_node_views_pre_view(&$view) {
+  if ($view->name == 'transcriptions' && $view->current_display == 'page') {
+    if (node_access('create', 'manuscript')) {
+      $project_nid = arg(1);
+      $view->attachment_before = l(t('Add new transcription'), "node/add/manuscript/$project_nid");
+    }
+  }
+}
+

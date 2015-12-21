@@ -1,0 +1,6 @@
+name = Getty Expose Project
+description = Custom API for Getty Projects
+core = 7.x
+package = Getty Scholars' Workspace
+
+files[] = classes/getty_expose_project.class.php

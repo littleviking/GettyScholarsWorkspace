@@ -1,0 +1,74 @@
+<?php
+/**
+ * @file
+ * Code for the Bibliography feature.
+ */
+
+include_once 'bibliography.features.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function bibliography_menu() {
+  $items['project/%/bibliography'] = array(
+    'title' => 'Bibliography',
+    'title callback' => 'bibliography_page_title_callback',
+    'page callback' => 'bibliography_list',
+    'page arguments' => array(1),
+    'access callback' => 'bibliography_access_essay_list',
+    'access arguments' => array(1),
+  );
+
+  return $items;
+}
+
+function bibliography_page_title_callback($title) {
+  $gid = arg(1);
+  $group = node_load($gid);
+
+  return $group->title . ' ' . $title;
+}
+
+function bibliography_access_essay_list($gid) {
+  if (og_is_member('node', $gid)) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+function bibliography_list($gid) {
+  if ($gid) {
+    $output = '';
+    $attachment_before = array();
+    if (node_access('create', 'bibliography')) {
+      $attachment_before[] = l(t('Add new citation'), "node/add/bibliography/$gid");
+    }
+    if (feeds_access('import', 'bibliography')) {
+      $attachment_before[] = l(t('Import citation'), "import/bibliography/$gid");
+    }
+    $output .= implode('<br>', $attachment_before);
+    $output .= views_embed_view('bibliography', 'block_bibliography_list', $gid);
+    return $output;
+  }
+}
+
+/**
+ * Add reset link to bibliography exposed filter form
+ */
+function bibliography_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'views_exposed_form') {
+    $project_bibliography_pattern = '/^project\/[0-9]+\/bibliography/';
+    $views_ajax_pattern = '/^views\/ajax/';
+    $url = request_path();
+    if (preg_match($project_bibliography_pattern, $url) || preg_match($views_ajax_pattern, $url)) {
+      drupal_add_css(drupal_get_path('module', 'bibliography') . '/bibliography.css');
+      $form['reset'] = array(
+         '#type' => 'markup',
+         '#markup' => '<div onclick="javascript:jQuery(\'#views-exposed-form-bibliography-block-bibliography-list\').clearForm();jQuery(\'#edit-submit-bibliography\').click();"><a href="#">reset filters</a></div>',
+      );
+    }
+  }
+}
+

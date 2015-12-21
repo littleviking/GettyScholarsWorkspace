@@ -1,0 +1,8 @@
+name = Getty SW LightTable Cropzoom
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = views
+dependencies[] = lighttable
+dependencies[] = cropzoom
+dependencies[] = og

@@ -1,0 +1,7 @@
+name = OG Private Forums
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = og
+dependencies[] = og_access
+dependencies[] = forum

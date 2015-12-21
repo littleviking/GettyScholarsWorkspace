@@ -1,0 +1,7 @@
+name = Project Image WYSIWYG
+description = WYSIWYG button for adding references to images within the project
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = og
+dependencies[] = wysiwyg

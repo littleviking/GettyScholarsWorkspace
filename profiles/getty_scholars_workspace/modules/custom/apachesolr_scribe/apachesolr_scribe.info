@@ -1,0 +1,8 @@
+name = Apachesolr Scribe
+description = Separates annotations from nodes to allows direct searching and linking to annotations.
+core = 7.x 
+package = Getty Scholars' Workspace
+
+dependencies[] = node
+dependencies[] = apachesolr
+dependencies[] = scribe_text_attacher

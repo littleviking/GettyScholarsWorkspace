@@ -1,0 +1,109 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function scribe_tagger_menu() {
+  $items = array();
+
+  $items['admin/config/content/scribe/tagger'] = array(
+    'title' => 'Tagging Settings',
+    'description' => 'Change settings for tagging annotations.',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('scribe_tagger_admin_settings'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/scribe_tagger.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_scribe_js_alter().
+ */
+function scribe_tagger_scribe_js_alter(&$js) {
+  if(arg(0) != 'admin') {
+    $vocab = taxonomy_vocabulary_machine_name_load(variable_get('scribe_tagger_vocabulary', ''));
+    if ($vocab) {
+      $terms = taxonomy_get_tree($vocab->vid);
+
+      // Map over the resulting terms to what we need
+      $autocomplete = array();
+      $term_map = array();
+      foreach ($terms as $term) {
+        $term_map[$term->name] = $term->tid;
+        $autocomplete[] = $term->name;
+      }
+
+      // Add it to settings for the page
+      $js['settings']['data'][]['scribe_tagger'] = array(
+        'vocabulary' => $vocab,
+        'term_map' => $term_map,
+        'term_autocomplete' => $autocomplete,
+      );
+
+      // Add in the annotator tagger
+      $module_path = drupal_get_path('module', 'scribe_tagger');
+      $files = array(
+        '/js/drupal-tagger.js',
+        '/js/scribe-tagger.js',
+      );
+      foreach ($files as $file) {
+        $js[$module_path . $file] = array(
+          'type' => 'file',
+          'data' => $module_path . $file,
+          'cache' => TRUE,
+          'defer' => FALSE,
+          'preprocess' => TRUE,
+          'every_page' => FALSE,
+          'scope' => 'footer',
+          'group' => JS_DEFAULT,
+          'weight' => 100,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_library_alter().
+ *
+ * Add jQuery UI to the dependencies so we get autocomplete for tagging
+ */
+function scribe_tagger_library_alter(&$libraries, $module) {
+  if ($module == 'scribe_text_attacher') {
+    $vocab = taxonomy_vocabulary_machine_name_load(variable_get('scribe_tagger_vocabulary', ''));
+    if ($vocab) {
+      $libraries['annotator']['dependencies'][] = array('system', 'ui.autocomplete');
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_load().
+ */
+function scribe_tagger_entity_load($entities, $type) {
+  if ($type == 'scribe_annotation') {
+    foreach ($entities as $annotation) {
+      // Load the value of all tags into the "tags" key
+      $wrapper = entity_metadata_wrapper('scribe_annotation', $annotation);
+
+      // Map the tags over to a simple array of strings
+      try {
+        $tags = $wrapper->field_annotation_tags->value();
+        $simple_tags = array();
+        foreach ($tags as $tag) {
+          $simple_tags[] = $tag->name;
+        }
+        $annotation->tags = $simple_tags;
+      }
+      catch(EntityMetadataWrapperException $e) {
+        $annotation->tags = array();
+      }
+
+      // Get rid of the original field because it's not needed
+      unset($annotation->field_annotation_tags);
+    }
+  }
+}

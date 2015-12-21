@@ -1,0 +1,270 @@
+/* LightTable recent images */
+#lighttable-left {
+  width: 15%;
+  float: right;
+  margin-right: 0px;
+  margin-top: -25px;
+}
+
+#lt-recent-images,
+#make-comparison {
+  border: solid 1px #000;
+  text-align: center;
+}
+
+/* Make Comparison */
+#make-comparison {
+  padding: 5px;
+  background-color: #ccc;
+  cursor: default;
+  color: #999;
+  margin-right:-8px;
+  margin-bottom: 5px;
+  margin-top: -15px;
+  display: inline;
+  float: right;
+}
+
+#lt-recent-images h3 {
+  padding: 15px;
+  margin-bottom: 0;
+}
+
+#lt-recent-images .lighttable-thumb-container {
+  cursor: pointer;
+  text-align: center;
+}
+
+#lt-recent-images {
+  overflow: auto;
+  display: none;
+  float: right;
+  margin: 0px 0px 0px 0px;
+}
+
+#lt-recent-images img {
+  margin: 10px auto;
+}
+
+/* LightTable main work area */
+#lighttable {
+  /* TODO: figure out these dimensions */
+  width: 100%;
+  height: 600px;
+
+  border: double 4px #000;
+  float: left;
+  margin-bottom: 20px;
+  overflow: hidden;
+  position: relative;
+  background-color: #ccc;
+}
+
+.page-project-lighttable .title {
+  width: 50%;
+  display: block;
+  margin-top: -20px;
+  margin-bottom: 3px;
+}
+
+
+#lighttable .lighttable-image-container,
+#lt-recent-images img {
+  border: solid 1px #000;
+}
+
+.lighttable-image-container {
+  background-color: #fff;
+  border: solid 1px #000;
+  padding: 10px 10px 26px;
+}
+
+.lighttable-image-container .ui-state-disabled {
+  opacity: 1;
+  -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(opacity=100)"; /*IE8*/
+}
+
+/* Links for images within the LightTable */
+.lighttable-links,
+.lighttable-crop-links {
+  bottom: 0;
+  box-sizing: border-box;
+  height: 36px;
+  left: 0;
+  overflow: hidden;
+  padding: 10px;
+  position: absolute;
+  width: 100%;
+}
+
+.lighttable-links .remove-link,
+.lighttable-crop-links .crop-cancel-link {
+  cursor: pointer;
+  float: right;
+}
+
+.lighttable-links .crop-link-modal,
+.lighttable-crop-links .crop-save-link {
+  cursor: pointer;
+  float: left;
+}
+
+.lighttable-crop-links {
+  display: none;
+  clear: both;
+}
+
+.view-id-project_images {
+  float: left;
+  border: solid 1px #000;
+  width: 100%;
+}
+.view-id-project_images .view-filters {
+  border-bottom: solid 1px #000;
+  padding: 10px;
+  display: none;
+}
+
+.view-id-project_images .view-content {
+  padding: 10px;
+}
+
+.view-id-project_images li {
+  cursor: pointer;
+  position: relative;
+  margin-right: 10px;
+}
+
+.view-id-project_images .lighttable-image-container {
+  display: none;
+}
+
+.views-fluid-grid-list li.views-fluid-grid-item {
+  background-color: #fff;
+  margin-bottom: 10px;
+  z-index: 10;
+}
+
+.page-project-lighttable .views-table {
+  position: relative;
+}
+
+.view-id-project_images #edit-combine {
+  font-style: italic;
+}
+
+.view-id-project_images .views-fluid-grid-list {
+  padding: 0;
+}
+
+.view-id-project_images .views-row {
+  cursor: pointer;
+}
+
+/* exposed form */
+.views-exposed-form-display-link {
+  cursor: pointer;
+}
+
+.removed-image {
+  background-color: #000;
+  opacity: 0.4;
+  position: absolute;
+  z-index: 999;
+  filter: alpha(opacity=40); /* IE */
+  -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(opacity=40)"; /*IE8*/
+}
+
+#lt-available-images .view-id-project_images .view-content {
+  height: 300px;
+  overflow: auto;
+}
+
+.page-project-lighttable .views-exposed-form-display-link {
+  float: left;
+  width: 30px;
+  height: 30px;
+}
+
+.page-project-lighttable .views-exposed-widgets #edit-tid-wrapper {
+  width: 30%;
+}
+
+.page-project-lighttable .views-exposed-widgets #edit-tid-wrapper div.form-type-bef-checkbox {
+  width: 50%;
+  float: left;
+}
+
+.page-project-lighttable input.form-submit {
+  background: none;
+}
+
+.page-project-lighttable #edit-combine-wrapper {
+  padding: .5em .5em 0 0;
+}
+
+#display-grid-link {
+  background: url(images/display.png) no-repeat -25px 0px;
+  width: 25px;
+  height: 25px;
+  position: relative;
+}
+
+#display-list-link {
+  background: url(images/display.png) no-repeat 0px 0px;
+  width: 25px;
+  height: 25px;
+  position: relative;
+}
+
+.views-exposed-form .views-exposed-widget input.form-submit {
+  margin-top: 0;
+  border-radius: 5px;
+  padding: 4px 6px;
+}
+
+#edit-tid-wrapper {
+  position: relative;
+}
+
+#filter-toggle {
+  position: absolute;
+  width: 150px;
+  height: 12px;
+  background: url(images/arrows.png) no-repeat 0px 0px;
+  top: 10px;
+  left: 130px;
+  cursor: pointer;
+}
+
+/* Comparison node edit form */
+#comparison-node-form #edit-field-image-references-und {
+  height: 300px;
+  overflow: scroll;
+}
+#comparison-node-form #edit-field-image-references-und .form-item {
+  float: left;
+  width: 125px;
+  height: 125px;
+}
+
+#comparison-node-form .vertical-tabs {
+  clear: both;
+}
+
+#lighttable #zoomContainer #zoomSlider.horizontal {
+  width: 75%;
+}
+
+/* Full-sized image */
+.lighttable-full-image img {
+  border: solid 1px #000;
+  height: auto;
+  width: 100%;
+}
+
+
+.view-display-id-available_images_list_block th img {
+  position: absolute;
+  top: 6px;
+}

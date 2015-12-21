@@ -1,0 +1,20 @@
+#admin-menu,
+#section-header {
+  display: none;
+}
+
+.views-field-field-image {
+  cursor: pointer;
+}
+
+.views-field-caption {
+  display: none;
+}
+
+h1.title {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+form#project-node-form #edit-field-image-references {
+    display:none;
+}

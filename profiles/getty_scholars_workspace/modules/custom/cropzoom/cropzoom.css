@@ -1,0 +1,85 @@
+.cropzoom-container {
+  height: auto !important;
+}
+
+.cropzoom-container #k {
+  position: relative !important;
+}
+
+.cropzoom-container .ui-draggable.ui-resizable {
+  z-index: 100000;
+}
+
+.button {
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-bottom: 1em;
+  margin-right: 1em; /* LTR */
+  color: #5a5a5a;
+  text-align: center;
+  font-weight: normal;
+  border: 1px solid #e4e4e4;
+  float: left;
+  width: 110px;
+}
+
+.button-disabled {
+  background-color: #ccc;
+}
+
+.cropzoom-buttons {
+  display: none;
+  float: right;
+  width: 50%;
+  margin-top: 10px;
+}
+
+/*image.cropzoom-image {
+  clear: both;
+}*/
+
+#spinner {
+  position: absolute;
+  z-index: 999;
+}
+
+.cropholder image {
+  cursor: url(https://mail.google.com/mail/images/2/openhand.cur), default;
+}
+
+.cropholder image.cursordown {
+  cursor: url(https://mail.google.com/mail/images/2/closedhand.cur), default !important;
+}
+
+.cropzoom-image-container {
+  clear: both;
+}
+
+.cropzoom-overlay {
+  background-color: #000;
+  opacity: 0.5;
+}
+
+#zoomContainer #zoomMin.horizontal {
+  color: #000;
+  margin: 0 3px;
+  padding: 0 10px 0 0;
+  float: left;
+  text-align: center;
+}
+
+#zoomContainer #zoomMax.horizontal {
+  color: #000;
+  margin: 0 3px;
+  padding: 0 0 0 10px;
+  float: left;
+  text-align: center;
+}
+
+#zoomContainer #zoomSlider.horizontal {
+  margin: 7px auto;
+  height: 6px;
+  width: 550px;
+  float: left;
+  position: relative;
+}

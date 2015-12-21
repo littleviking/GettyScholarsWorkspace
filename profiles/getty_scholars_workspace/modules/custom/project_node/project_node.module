@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Getty Project feature.
+ */
+
+include_once 'project_node.features.inc';

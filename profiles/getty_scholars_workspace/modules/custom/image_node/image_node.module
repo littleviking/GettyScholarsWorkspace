@@ -1,0 +1,20 @@
+<?php
+/**
+ * @file
+ * Code for the Getty Image feature.
+ */
+
+include_once 'image_node.features.inc';
+
+/**
+ * Implements hook_views_pre_view().
+ */
+function image_node_views_pre_view(&$view) {
+  if ($view->name == 'images' && $view->current_display == 'page_1') {
+    if (node_access('create', 'image')) {
+      $project_nid = arg(1);
+      $view->attachment_before = l(t('Add new image'), "node/add/image/$project_nid");
+    }
+  }
+}
+

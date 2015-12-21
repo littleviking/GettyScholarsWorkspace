@@ -1,0 +1,4 @@
+name = Scribe Tagger
+description = Allow annotations to be tagged with tags from a preconfigured taxonomy vocabulary.
+core = 7.x
+package = Getty Scholars' Workspace

@@ -1,0 +1,10 @@
+name = Scribe
+description = Scribe is a module which enables content to be annotated.
+core = 7.x
+package = Getty Scholars' Workspace
+
+dependencies[] = entity
+dependencies[] = entityreference
+files[] = includes/ScribeAttacher.inc
+files[] = includes/ScribeAttachmentController.inc
+files[] = includes/ScribeAnnotationController.inc

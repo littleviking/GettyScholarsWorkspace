@@ -1,0 +1,134 @@
+; Packaging information for getty_scholars_workspace
+name = "Getty Scholars' Workspace"
+description = ""
+exclusive = "1"
+core = "7.x"
+package = Getty Scholars' Workspace
+; ----------
+; Dependencies
+; ----------
+; Administration
+dependencies[] = admin_menu
+; Chaos tool suite
+dependencies[] = ctools
+; Context
+dependencies[] = context
+dependencies[] = context_ui
+; Core
+dependencies[] = block
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = dashboard
+dependencies[] = dblog
+dependencies[] = field
+dependencies[] = field_sql_storage
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = filter
+dependencies[] = forum
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = node
+dependencies[] = number
+dependencies[] = options
+dependencies[] = rdf
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = system
+dependencies[] = taxonomy
+dependencies[] = text
+dependencies[] = user
+; Date/Time
+dependencies[] = date
+dependencies[] = date_api
+; Development
+dependencies[] = profiler_builder
+; Feeds
+dependencies[] = feeds
+dependencies[] = feeds_ui
+; Fields
+dependencies[] = entityreference
+dependencies[] = field_collection
+dependencies[] = field_collection_fieldset
+dependencies[] = field_formatter_class
+dependencies[] = field_group
+dependencies[] = link
+; FlexSlider
+dependencies[] = flexslider
+; Getty Scholars' Workspace
+dependencies[] = bibliography
+dependencies[] = bibliography_plugin
+dependencies[] = bibliography_support
+dependencies[] = comparison_display
+dependencies[] = comparison_node
+dependencies[] = comparison_plugin
+dependencies[] = cropzoom
+dependencies[] = deepzoom
+dependencies[] = essay_node
+dependencies[] = getty_expose_project
+dependencies[] = gettysw_annotation_permissions
+dependencies[] = gettysw_general
+dependencies[] = gettysw_ltcz
+dependencies[] = gettysw_user_permissions
+dependencies[] = gettysw_wysiwyg
+dependencies[] = htabs_sidebyside
+dependencies[] = image_node
+dependencies[] = lighttable
+dependencies[] = manuscript_node
+dependencies[] = og_forum_private_forums
+dependencies[] = page_node
+dependencies[] = project_dashboard
+dependencies[] = project_image_plugin
+dependencies[] = project_node
+dependencies[] = scribe
+dependencies[] = scribe_image_attacher
+dependencies[] = scribe_og
+dependencies[] = scribe_tagger
+dependencies[] = scribe_text_attacher
+dependencies[] = shared_field_bases
+dependencies[] = sw_theme
+dependencies[] = timeline
+; Media
+dependencies[] = file_entity
+; Organic groups
+dependencies[] = comment_og
+dependencies[] = og
+dependencies[] = og_access
+dependencies[] = og_context
+dependencies[] = og_ui
+; Other
+dependencies[] = administerusersbyrole
+dependencies[] = backup_migrate
+dependencies[] = colorbox
+dependencies[] = diff
+dependencies[] = entity
+dependencies[] = field_formatter_settings
+dependencies[] = footnotes
+dependencies[] = image_field_caption
+dependencies[] = job_scheduler
+dependencies[] = libraries
+dependencies[] = module_filter
+dependencies[] = restws
+dependencies[] = role_delegation
+dependencies[] = strongarm
+; Search Toolkit
+dependencies[] = facetapi
+; User interface
+dependencies[] = footnotes_wysiwyg
+dependencies[] = jquery_update
+dependencies[] = popup
+dependencies[] = popup_ui
+dependencies[] = wysiwyg
+; Views
+dependencies[] = better_exposed_filters
+dependencies[] = views
+dependencies[] = views_bulk_operations
+dependencies[] = views_fluid_grid
+dependencies[] = views_timelinejs
+dependencies[] = views_ui
+; Features
+dependencies[] = features
+dependencies[] = views_timelinejs_feature
+

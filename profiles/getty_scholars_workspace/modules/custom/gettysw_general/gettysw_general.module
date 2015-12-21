@@ -1,0 +1,123 @@
+<?php
+
+function gettysw_general_init() {
+  drupal_add_js(drupal_get_path('module', 'gettysw_general') . '/gettysw_general.js');
+  drupal_add_js(drupal_get_path('module', 'gettysw_general') . '/jquery.webkitresize.js');
+}
+
+/**
+ * Implements hook_comment_view_alter().
+ */
+function gettysw_general_comment_view_alter(&$build) {
+  $action = arg(1);
+  if (isset($action) && $action == 'reply') {
+    if (isset($build['links']['comment']['#links']['comment-reply'])) {
+      unset($build['links']['comment']['#links']['comment-reply']);
+    }
+  }
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function gettysw_general_theme_registry_alter(&$theme_registry) {
+  // Override the image_formatter function and add caption as a variable to be
+  // assembled by theme().
+  $theme_registry['image_formatter']['function'] = 'gettysw_general_image_formatter';
+}
+
+/**
+ * Override of theme_image_formatter().
+ */
+function gettysw_general_image_formatter($variables) {
+  // Remove caption added by image_field_caption module
+  $image = theme_image_formatter($variables);
+  return $image;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function gettysw_general_form_alter(&$form, &$form_state, $form_id) {
+  // Remove extra groups field
+  if (isset($form['og_group_ref']['und'][0]['admin'])) {
+    unset($form['og_group_ref']['und'][0]['admin']);
+  }
+  
+  //Updating buttons and links on user sign on screen.
+  if ($form_id == 'user_login') {
+    unset($form['name']['#description']);
+    unset($form['pass']['#description']);
+    $form['name']['#attributes']['placeholder'] = t('Username');
+    $form['pass']['#attributes']['placeholder'] = t('Password');
+    $form['actions']['submit']['#value'] = t('Login');
+    $form['actions']['request_password'] = array('#markup' => l(t('Forgot Password?'), 'user/password'), '#weight' => 1000);
+  }
+  if ($form_id == 'user_register_form') {
+    unset($form['account']['name']['#description']);
+    unset($form['account']['mail']['#description']);
+    $form['account']['name']['#attributes']['placeholder'] = t('Username');
+    $form['account']['mail']['#attributes']['placeholder'] = t('Email');
+  }
+  if ($form_id == 'user_pass') {
+    $form['name']['#attributes']['placeholder'] = 'Username or email address';
+    $form['actions']['back_to_login'] = array('#markup' => l(t('Back to Login'), 'user/login'), '#weight' => 1000);
+  }
+
+  // For comment forms, change form submit handler so that it doesn't redirect
+  // to anchor to the new comment.
+  $comment_form_pattern = '/comment_node_[a-z]+_form/';
+  if (preg_match($comment_form_pattern, $form_id)) {
+    $form['#submit'] = array('gettysw_general_comment_form_submit');
+  }
+}
+
+/**
+ * Process comment form submissions; prepare the comment, store it, and set a redirection target.
+ * This is identical to comment_form_submit, except that it does not anchor to
+ * the new comment.
+ */
+function gettysw_general_comment_form_submit($form, &$form_state) {
+  $node = node_load($form_state['values']['nid']);
+  $comment = comment_form_submit_build_comment($form, $form_state);
+  if (user_access('post comments') && (user_access('administer comments') || $node->comment == COMMENT_NODE_OPEN)) {
+    // Save the anonymous user information to a cookie for reuse.
+    if (user_is_anonymous()) {
+      user_cookie_save(array_intersect_key($form_state['values'], array_flip(array('name', 'mail', 'homepage'))));
+    }
+
+    comment_save($comment);
+    $form_state['values']['cid'] = $comment->cid;
+
+    // Add an entry to the watchdog log.
+    watchdog('content', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
+
+    // Explain the approval queue if necessary.
+    if ($comment->status == COMMENT_NOT_PUBLISHED) {
+      if (!user_access('administer comments')) {
+        drupal_set_message(t('Your comment has been queued for review by site administrators and will be published after approval.'));
+      }
+    }
+    else {
+      drupal_set_message(t('Your comment has been posted.'));
+    }
+    $query = array();
+    // Find the current display page for this comment.
+    $page = comment_get_display_page($comment->cid, $node->type);
+    if ($page > 0) {
+      $query['page'] = $page;
+    }
+    // Redirect to the newly posted comment.
+    $redirect = array('node/' . $node->nid, array('query' => $query));
+  }
+  else {
+    watchdog('content', 'Comment: unauthorized comment submitted or comment submitted to a closed post %subject.', array('%subject' => $comment->subject), WATCHDOG_WARNING);
+    drupal_set_message(t('Comment: unauthorized comment submitted or comment submitted to a closed post %subject.', array('%subject' => $comment->subject)), 'error');
+    // Redirect the user to the node they are commenting on.
+    $redirect = 'node/' . $node->nid;
+  }
+  $form_state['redirect'] = $redirect;
+  // Clear the block and page caches so that anonymous users see the comment
+  // they have posted.
+  cache_clear_all();
+}

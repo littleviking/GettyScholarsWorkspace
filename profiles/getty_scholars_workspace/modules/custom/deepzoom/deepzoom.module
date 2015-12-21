@@ -1,0 +1,180 @@
+<?php
+/**
+ * @file
+ * Contains core functions for the Deep Zoom module.
+ */
+
+/**
+ * Include additional files.
+ */
+foreach (module_list() as $module) {
+  if (file_exists($file = dirname(__FILE__) . "/includes/{$module}.inc")) {
+    require_once $file;
+  }
+}
+
+/**
+ * Implements hook_init().
+ */
+function deepzoom_init() {
+  drupal_add_js(drupal_get_path('module', 'deepzoom') . '/deepzoom.js');
+  drupal_add_js(libraries_get_path('openseadragon') . '/openseadragon.min.js');
+  drupal_add_js(array('openseadragon' => array('image_path' => base_path() . libraries_get_path('openseadragon') . '/images/')), 'setting');
+  drupal_add_js(array('deepzoom' => file_create_url('public://deepzoom')), 'setting');
+  drupal_add_css(drupal_get_path('module', 'deepzoom') . '/deepzoom.css');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function deepzoom_menu() {
+  $directory_path = file_stream_wrapper_get_instance_by_scheme('public')->getDirectoryPath();
+  $items[$directory_path . '/deepzoom'] = array(
+    'title' => 'Generate deepzoom images',
+    'page callback' => 'deepzoom_deliver',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function deepzoom_theme() {
+  $items = array();
+
+  $items['deepzoom'] = array(
+    'variables' => array(
+      'images' => array(),
+      'image_style' => 'large',
+      'generate_method' => 'batch',
+    ),
+  );
+
+  $items['deepzoom_dzi'] = array(
+    'variables' => array(
+      'size' => NULL,
+      'overlap' => NULL,
+      'format' => NULL,
+      'width' => NULL,
+      'height' => NULL,
+    ),
+    'template' => 'deepzoom',
+  );
+
+  return $items;
+}
+
+/**
+ * Deep Zoom just-in-time image & xml generator.
+ */
+function deepzoom_deliver() {
+  $config = variable_get('deepzoom_config', array(
+    'tile_size' => 254,
+    'tile_overlap' => 1,
+  ));
+
+  $args = func_get_args();
+  $dz_filename = array_pop($args);
+  if (preg_match('/\.dzi$/', $dz_filename)) {
+    // XML metadata file.
+    $image_path = implode('/', $args) . preg_replace('/\.dzi$/', '', $dz_filename);
+    $uri = 'public://' . $image_path;
+    $image = image_load($uri);
+
+    $xml = theme('deepzoom_dzi', array(
+      'size' => $config['tile_size'],
+      'overlap' => $config['tile_overlap'],
+      'format' => $image->info['extension'],
+      'width' => $image->info['width'],
+      'height' => $image->info['height'],
+    ));
+    $directory = "public://deepzoom";
+    $xml_path = $directory . '/' . $image_path . '.dzi';
+    $headers = array('Content-Type' => 'application/xml', 'Content-Length' => strlen($xml));
+    if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      file_unmanaged_save_data($xml, $xml_path, FILE_EXISTS_REPLACE);
+      file_transfer($xml_path, $headers);
+    }
+    else {
+      drupal_send_headers($headers);
+      print $xml;
+    }
+    // Exits after file transfer.
+  }
+
+  // Else: Generate image file instead.
+
+  $level = array_pop($args);
+  $image_path = preg_replace('/_files$/', '', implode('/', $args));
+  $uri = 'public://' . $image_path;
+  $image = image_load($uri);
+
+  list($rc, $extension) = explode('.', $dz_filename);
+  list($row, $column) = explode('_', $rc);
+
+  $level_dir = "public://deepzoom/{$image_path}_files/$level";
+
+  // Setup level directory and temporary image.
+  if (file_prepare_directory($level_dir, FILE_CREATE_DIRECTORY)) {
+    if (file_exists("$level_dir/full.$extension")) {
+      $temp_image = image_load("$level_dir/full.$extension");
+    }
+    else {
+      $max_level = ceil(log(max($image->info['width'], $image->info['height'])) / log(2));
+      $scale = pow(0.5, $max_level - $level);
+      $temp_image = image_load($uri);
+      image_effect_apply($temp_image, array(
+        'effect callback' => 'image_resize_effect',
+        'data' => array(
+          'width' => (int) ceil($image->info['width'] * $scale),
+          'height' => (int) ceil($image->info['height'] * $scale),
+        ),
+      ));
+      image_save($temp_image, "$level_dir/full.$extension");
+    }
+
+    $offset_x = $row == 0 ? 0 : $config['tile_overlap'];
+    $offset_y = $column == 0 ? 0 : $config['tile_overlap'];
+    $x = ($row * $config['tile_size']) - $offset_x;
+    $y = ($column * $config['tile_size']) - $offset_y;
+
+    $width = $config['tile_size'] + ($row == 0 ? 1 : 2) * $config['tile_overlap'];
+    $height = $config['tile_size'] + ($column == 0 ? 1 : 2) * $config['tile_overlap'];
+    $crop_width = min($width, $temp_image->info['width'] - $x);
+    $crop_height = min($height, $temp_image->info['height'] - $y);
+
+    image_effect_apply($temp_image, array(
+      'effect callback' => 'image_crop_effect',
+      'data' => array(
+        'anchor' => "{$x}-{$y}",
+        'width' => $crop_width,
+        'height' => $crop_height,
+      ),
+    ));
+    image_save($temp_image, "$level_dir/{$row}_{$column}.$extension");
+
+    $image = image_load("$level_dir/{$row}_{$column}.$extension");
+    file_transfer($image->source, array('Content-Type' => $image->info['mime_type'], 'Content-Length' => $image->info['file_size']));
+    // Exits after file_transfer
+  }
+
+  return MENU_NOT_FOUND;
+}
+
+/**
+ * Theme function; Deep Zoom.
+ */
+function theme_deepzoom($variables) {
+  $element = array();
+
+  $images = is_array($variables['images']) ? $variables['images'] : array(md5_file($variables['images']) => $variables['images']);
+  foreach ($images as $md5 => $uri) {
+    list($scheme, $path) = explode('://', $uri);
+    $dzi_path = file_create_url("public://deepzoom/$path.dzi");
+    $element[] = array('#markup' => "<div data-deepzoom-dzi='$dzi_path' id='deepzoom-$md5' class='deepzoom'></div>");
+  }
+
+  return $element;
+}
