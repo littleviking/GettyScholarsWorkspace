@@ -26,6 +26,3 @@ Bugs and feature requests are tracked on [GitHub](https://github.com/GettySchola
 
 The Getty Scholars’ Workspace is a highly collaborative effort, originating at the Getty Research Institute with Head of Digital Art History Murtha Baca. 
 
-### License
-
-The Getty Scholars’ Workspace is licensed under the GNU Affero GPL.
