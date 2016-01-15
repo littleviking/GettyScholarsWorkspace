@@ -16,7 +16,7 @@ The outcome of a project conducted in the Getty Scholars' Workspace might be an 
 
 ### Requirements
 
-– Getty Scholars’ Workspace requires Apache, MySQL 5.0.15, and PHP 5.2.5 or higher (5.4 or higher recommended)
+Getty Scholars’ Workspace requires Apache, MySQL 5.0.15, and PHP 5.2.5 or higher (5.4 or higher recommended)
 
 ### Submitting bugs and feature requests
 
