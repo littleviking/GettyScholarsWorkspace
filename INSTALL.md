@@ -1,187 +1,144 @@
-# The Getty Scholars’ Workspace Installation Instructions
+Getty Scholars' Workspace Installation
+======================================
 
-## System Requirements
+This document outlines methods to run the application locally on your personal computer or to do a full installation on a web server.
 
-* Apache
- * MySQL 5.0.15
- * PHP 5.2.5 or higher (5.4 or higher recommended)
+Test Drive with Docker
+----------------------
 
-Information about other, less common configurations can be found at
-https://www.drupal.org/requirements
+Getty Scholars' Workspace is a multi-tenant web application, so it is intended to be run on a web server. However, if you'd like to run it on your personal computer just to give it a test drive, you can use Docker to create a virtual server environment and run the Workspace locally. Follow the steps below to give it a spin. Scroll further for real deployment instructions.
 
-## Step 1: Setting up the MySQL database
+1. Install Docker on your machine. Follow instruction on the Docker website: https://www.docker.com/
 
-These instructions are for creating a database on a Linux server
-below. For other types of database setups (cPanel, Postgres, Windows,
-or other), see instructions at:
-https://www.drupal.org/documentation/install/create-database. For
-information on installing and configuring MySQL, see:
-http://dev.mysql.com/doc/refman/5.7/en/index.html
+2. If you are using docker-machine (Mac or Windows) be sure to start it and take note of the IP address assigned to Docker. Docker is configured to use the default machine with IP 192.168.99.100.
 
-**Note:** The database should be created with UTF-8 (Unicode) encoding,
-for example utf8_general_ci.
+        $ docker-machine env default
+        $ eval $(docker-machine env default)
 
-In the following examples, 'username' is a sample MySQL user who will
-have the CREATE and GRANT privileges and 'databasename' is the name of
-the new database.  Use the appropriate names for your system.
+3. At the command line, pull the Getty Scholars' Workspace image.
 
-**A.** Create a new database for your site (change the username and databasename):
+        $ docker pull thegetty/scholarsworkspace
 
-    mysql -u username -p -e "CREATE DATABASE databasename CHARACTER
-    SET utf8 COLLATE utf8_general_ci;"
+4. Run the container.
 
-MySQL prompts for the 'username' database password, and creates the initial database
-files.
+        $ docker run -d -p 8080:80 --name=wkspc thegetty/scholarsworkspace supervisord -n
 
-**B.** Log in:
+5. Point your browser to `<ip address>:8080/GettyScholarsWorkspace`. Use the IP address noted in Step 2.
 
-    mysql -u username -p
+6. The Drupal administrator login is `scholar` and the password is `workspace`. Be sure to change these in the Drupal admin interface.
 
-MySQL will prompt for the 'username' database password.
+7. To shut it down, stop the container:
 
-**C.** At the MySQL prompt, set the permissions using the following command:
+        $ docker stop wkspc
 
-    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER,
-    CREATE TEMPORARY TABLES ON databasename.* TO
-    'username'@'localhost' IDENTIFIED BY 'password';
 
-In this case:
- * 'databasename' is the name of the database
- * 'username' is the username of the MySQL user account
- * 'localhost' is the host where Drupal is installed
- * 'password' is the password required for that username
- 
-Be sure to use backticks ( ` ) around the database name if using a
-MySQL escape character (_ or %) in the database name. For example,
-because the underscore character is a wildcard, drupal_test_account.*
-should be `drupal\_test\_account`.* for security. Otherwise the
-underscores would match any character and could accidentally give
-access to other similarly named databases.
 
-**Note:** Unless the database user/host combination for your Drupal
-installation has all of the privileges listed above (except possibly
-`CREATE TEMPORARY TABLES`, which is currently only used by Drupal core
-automated tests and some contributed modules), you will not be able to
-install or run Drupal.
+Web Server Installation
+-----------------------
+These installation instructions assume you are installing Getty Scholars' Workspace on a server (virtual or physical) with a clean new instance of Ubuntu 14.04 as the operating system.
 
-For further information on the GRANT statement, see:
-http://dev.mysql.com/doc/refman/5.0/en/grant.html
+**Method 1: Using Docker**
 
-**D.** If successful, MySQL will reply with:
+1. Install Docker on your machine. See instructions here: https://docs.docker.com/engine/installation/linux/ubuntulinux/
 
-    Query OK, 0 rows affected
+2. At the command line, pull the Getty Scholars' Workspace image.
 
-**E.** Now exit the MYSQL prompt by typing:
+        $ docker pull thegetty/scholarsworkspace:latest
 
-    exit
-	
-The server will answer by saying:
+4. Run the container. Set the port to your own preference. The example uses `8080` to avoid clashing with other applications. But if you have no other web apps running, feel free to use `80`.
 
-    Bye
-	
-## Step 2: Install Drush
+        $ docker run -d -p 8080:80 --name=wkspc thegetty/scholarsworkspace supervisord -n
 
-On Debian, just do:
+5. Point your browser to `<ip address>:8080/GettyScholarsWorkspace`. If you are using a browser directly on the server, use `localhost` for the IP address. If you are using a browser on your local machine, then use the IP address of the target server.
 
-	apt-get install drush
+6. The Drupal administrator login is `scholar` and the password is `workspace`. Be sure to change these in the Drupal admin interface.
 
-For systems that do not have drush packaged and available for easy
-installation, you can install from source:
+7. To shut it down, simply stop the container:
 
-**A.** Download the latest stable release using the code below or
-browse to github.com/drush-ops/drush/releases .
+        $ docker stop wkspc
 
-    wget http://files.drush.org/drush.phar
-	
-**B.** Test the install
+8. For production deployment, you should change the MySQL passwords and set up Apache to use https.
 
-    php drush.phar core-status
+**Method 2: Full installtion**
 
-**C.** Rename to `drush` instead of `php drush.phar`. The destination
-can be anywhere on $PATH.
+1. Update the package repositories.
 
-    chmod +x drush.phar
-    sudo mv drush.phar /usr/local/bin/drush
-	
-**D.** Enrich the bash startup file with completion and aliases.
+        $ sudo apt-get update
 
-    drush init
+2. Install Apache 2 and PHP5.
 
-## Step 3: Download the Getty Scholars’ Workspace Repo
+        $ sudo apt-get install apache2 php5 libapache2-mod-php5 php5-gd vim wget
 
-    git clone https://github.com/GettyScholarsWorkspace/GettyScholarsWorkspace
+3. Edit the Apache config file to allow .htaccess overrides.
 
-## Step 4: Fetch Required Modules
+        $ sudo vim /etc/apache2/apache2.conf
 
-    drush make profiles/getty_scholars_workspace/build-gsw.make
-	
-## Step 5: Prepare Drupal for Installation
+    Find the following section and change `AllowOverride` to `All`
+        <Directory /var/www/>
+                Options Indexes FollowSymLinks
+                AllowOverride All
+                Require all granted
+        </Directory>
 
-The web server needs to be able to write to sites/default/,
-sites/default/settings.php, and sites/default/files/ to install. By
-default, Drupal will attempt to create and populate the settings.php
-file automatically when you use install.php to set up the site. If you
-get errors referring to the Settings file during installation, you
-will have to manually create the settings.php file and do a few more
-tasks before you can run install.php.
+        :wq
 
-**A.** Navigation and Creation
+4. Enable the rewrite module and start Apache.
 
-Navigate to sites/default of your root Drupal install. Copy the
-default.settings.php file and save the new file as settings.php in the
-same directory (see note below about renaming). If you have shell
-access (command line), run the following command from the directory
-that contains your Drupal installation files:
+        $ sudo a2enmod rewrite
+        $ sudo /etc/init.d/apache2 start
 
-    cp sites/default/default.settings.php sites/default/settings.php
+5. Install MySQL. When prompted, set the MySQL password for the `root` user.
 
-**Note:** Do not simply rename the file. The Drupal installer needs both
-files.
+        $ sudo apt-get install mysql-server libapache2-mod-auth-mysql php5-mysql
 
-**B.** Check That the Permissions Are Writable:
+6. Start MySQL and login as root user.
 
-By default, the sites/default and settings.php files should be
-writable. Check that the permissions of sites/default and settings.php
-are writable by issuing the following commands:
+        $ sudo /etc/init.d/mysql start
+        $ mysql -u root -p
 
-    ls -l sites/
+7. Create the database and account permissions for Getty Scholars' Workspace by entering the following commands. Pick your own `<password>` and remember it.
 
-Permission on sites/default should be 755 [drwxr-xr-x]:
+        CREATE DATABASE scholarsworkspace CHARACTER SET utf8 COLLATE utf8_general_ci;
 
-    ls -l sites/default/settings.php
-	
-Permission on settings.php should be 644 [-rw-r--r--].  If they are
-anything but writable, you can issue the following commands:
+        GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON scholarsworkspace.* TO 'scholar'@'localhost' IDENTIFIED BY '<password>';
 
-    chmod 644 sites/default/settings.php
+        exit;
 
-**C.** Try the Install
+8. Install Drush (Drupal shell tool).
 
-At this point, attempt the install. See if it is possible to get
-through the installation by running http://[yoursite]/install.php. If
-you are successful, visit the Reports page at Reports -> Status report
-(admin/reports/status). On the Reports page, look for a line that
-says: File system. If it says anything other than "Writable," follow
-Step 4 in the Help page linked below. Next, look for a line that says:
-Configuration file. If it says anything other than "Protected," you
-will need to re-secure the configuration files as described in Step 5
-in the Help page linked below.
+        $ wget http://files.drush.org/drush.phar
+        $ php drush.phar core-status
+        $ chmod +x drush.phar
+        $ mv drush.phar /usr/local/bin/drush
+        $ drush init
+        Append the above code to <user home>/.bashrc? (y/n): y
+        $ source ~/.bashrc
 
-If you're still unable to install, see this Help page for more
-options: https://www.drupal.org/documentation/install/settings-file
-Drupal 6, 7, and 8 come with a sample configuration file at
-sites/default/default.settings.php. Before running the installation
-script, copy the configuration file as a new file called settings.php
-and change its permissions. After the installation, restrict the
-permissions again.
+9. Install Git and clone the Getty Scholars' Workspace repository.
 
-## Step 6: Install Drupal
+        $ sudo apt-get install git
+        $ cd /var/www/html
+        $ git clone https://github.com/GettyScholarsWorkspace/GettyScholarsWorkspace
+        $ cd GettyScholarsWorkspace
 
-**A.** Launch site on preferred web browser.
+10. Install unzip and build the site.
 
-**B.** Follow Drupal Install instructions provided through interface.
+        $ sudo apt-get install unzip
+        $ sudo drush make profiles/getty_scholars_workspace/build-gsw.make
+        Make new site in the current directory? (y/n): y
+        $ sudo mkdir sites/default/files
+        $ sudo chmod 777 sites/default/files
+        $ sudo cp sites/default/default.settings.php sites/default/settings.php
+        $ sudo chmod 666 sites/default/settings.php
 
-## Step 7: Using Scholars’ Workspace
+11. Install sendmail for administrator notifications.
 
-Consult the Getty Scholars’ Workspace User Guide for further guidance.
+        $ sudo apt-get install sendmail
 
+12. Now open the site in your browser and follow the instructions: `http://<your URL or IP address>/install.php`
+
+13. Change the permissions back.
+
+        $ sudo chmod 644 sites/default/settings.php
+
+14. For production deployment, you should set up Apache to use https.
