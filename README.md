@@ -6,7 +6,7 @@ The outcome of a project conducted in Getty Scholars' Workspace might be an exhi
 
 ## Installation
 
-[Installation Instructions](http://www.getty.edu/research/scholars/digital_art_history/getty_scholars_workspace/index.html)
+Installation instructions are in `INSTALL.md`.
 
 ## Documentation
 
