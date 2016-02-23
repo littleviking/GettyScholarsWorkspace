@@ -28,8 +28,7 @@ Getty Scholars’ Workspace is a highly collaborative effort, originating at the
 
 ### License
 
-Getty Scholars' Workshop is Copyright 2015, 2016 the J. Paul Getty
-Trust.
+**Getty Scholars' Workspace is Copyright 2015-2016 J. Paul Getty Trust.**
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of Version 3 of the GNU General Public License as
