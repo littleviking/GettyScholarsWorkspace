@@ -10,10 +10,7 @@ Getty Scholars' Workspace is a multi-tenant web application, so it is intended t
 
 1. Install Docker on your machine. Follow instruction on the Docker website: https://www.docker.com/
 
-2. If you are using docker-machine (Mac or Windows) be sure to start it and take note of the IP address assigned to Docker. Docker is configured to use the default machine with IP 192.168.99.100.
-
-        $ docker-machine env default
-        $ eval $(docker-machine env default)
+2. If you are using docker-machine (Mac or Windows) be sure to start it using Docker Quickstart Terminal and take note of the IP address assigned to Docker. Docker is configured to use the default machine with IP 192.168.99.100.
 
 3. At the command line, pull the Getty Scholars' Workspace image.
 
