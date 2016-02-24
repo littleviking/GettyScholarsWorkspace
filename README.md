@@ -16,11 +16,11 @@ Installation instructions are in `INSTALL.md`.
 
 ### Requirements
 
-Getty Scholars’ Workspace requires Apache, MySQL 5.0.15, and PHP 5.2.5 or higher (5.4 or higher recommended)
+Getty Scholars’ Workspace requires Apache, MySQL 5.0.15, and PHP 5.2.5 or higher (5.4 or higher recommended).
 
 ### Submitting bugs and feature requests
 
-Bugs and feature requests are tracked on [GitHub](https://github.com/GettyScholarsWorkspace/GettyScholarsWorkspace/issues)
+Bugs and feature requests are tracked on [GitHub](https://github.com/GettyScholarsWorkspace/GettyScholarsWorkspace/issues).
 
 ### Author
 
