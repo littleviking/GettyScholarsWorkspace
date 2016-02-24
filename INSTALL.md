@@ -56,7 +56,7 @@ These installation instructions assume you are installing Getty Scholars' Worksp
 
 8. For production deployment, you should change the MySQL passwords and set up Apache to use https.
 
-**Method 2: Full installtion**
+**Method 2: Full installation**
 
 1. Update the package repositories.
 
