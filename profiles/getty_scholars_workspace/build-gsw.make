@@ -2,5 +2,5 @@
 core = "7.x"
 api = "2"
 
-projects[drupal][version] = "7.41"
+projects[] = "drupal"
 includes[] = "drupal-org.make"
