@@ -4,4 +4,4 @@
  * Code for the Scholars' Workspace Theme feature.
  */
 
-include_once 'sw_theme.features.inc';
+include_once 'gettysw_theme.features.inc';

@@ -88,7 +88,7 @@ dependencies[] = scribe_og
 dependencies[] = scribe_tagger
 dependencies[] = scribe_text_attacher
 dependencies[] = shared_field_bases
-dependencies[] = sw_theme
+dependencies[] = gettysw_theme
 dependencies[] = timeline
 ; Media
 dependencies[] = file_entity

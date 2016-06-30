@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * sw_theme.strongarm.inc
+ * gettysw_theme.strongarm.inc
  */
 
 /**
  * Implements hook_strongarm().
  */
-function sw_theme_strongarm() {
+function gettysw_theme_strongarm() {
   $export = array();
 
   $strongarm = new stdClass();

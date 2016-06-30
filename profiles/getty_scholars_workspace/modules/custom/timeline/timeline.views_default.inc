@@ -38,8 +38,6 @@ function timeline_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
   $handler->display->display_options['style_plugin'] = 'timelinejs';
   $handler->display->display_options['style_options']['timeline_theme'] = array(
-    'width' => '100',
-    'width_unit' => '1',
     'height' => '600',
     'height_unit' => '0',
   );
@@ -53,7 +51,6 @@ function timeline_views_default_views() {
     'tag' => '0',
   );
   $handler->display->display_options['style_options']['timeline_config'] = array(
-    'link_to_entity' => 1,
     'link_text_enabled' => 0,
     'link_text' => '',
     'strip_tags' => '0',
