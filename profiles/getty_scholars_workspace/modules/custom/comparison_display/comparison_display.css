@@ -5,18 +5,11 @@
 }
 
 .node-comparison-form .field-name-field-image-references {
-  max-height: 350px;
-  overflow: auto;
-  float: left;
-  margin-bottom: 25px;
+  overflow: hidden;
 }
 
 .node-comparison-form .field-name-field-image-references .form-type-checkbox,
-.node-type-comparison .field-name-field-image-references .form-type-checkbox {
-  float: left;
-  margin-right: 25px;
-}
-
+.node-type-comparison .field-name-field-image-references .form-type-checkbox,
 .node-comparison-form .field-name-field-image-references .form-type-radio {
   float: left;
   margin-right: 25px;

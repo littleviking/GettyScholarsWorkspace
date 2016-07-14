@@ -10,7 +10,7 @@
 function timeline_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-timeline_date-body'
+  // Exported field_instance: 'node-timeline_date-body'.
   $field_instances['node-timeline_date-body'] = array(
     'bundle' => 'timeline_date',
     'default_value' => NULL,
@@ -58,7 +58,7 @@ function timeline_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-timeline_date-field_timeline_caption_text'
+  // Exported field_instance: 'node-timeline_date-field_timeline_caption_text'.
   $field_instances['node-timeline_date-field_timeline_caption_text'] = array(
     'bundle' => 'timeline_date',
     'default_value' => NULL,
@@ -100,7 +100,7 @@ function timeline_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-timeline_date-field_timeline_credit_text'
+  // Exported field_instance: 'node-timeline_date-field_timeline_credit_text'.
   $field_instances['node-timeline_date-field_timeline_credit_text'] = array(
     'bundle' => 'timeline_date',
     'default_value' => NULL,
@@ -142,7 +142,7 @@ function timeline_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-timeline_date-field_timeline_dates'
+  // Exported field_instance: 'node-timeline_date-field_timeline_dates'.
   $field_instances['node-timeline_date-field_timeline_dates'] = array(
     'bundle' => 'timeline_date',
     'deleted' => 0,
@@ -206,7 +206,7 @@ function timeline_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-timeline_date-field_timeline_media_image'
+  // Exported field_instance: 'node-timeline_date-field_timeline_media_image'.
   $field_instances['node-timeline_date-field_timeline_media_image'] = array(
     'bundle' => 'timeline_date',
     'deleted' => 0,
@@ -269,7 +269,7 @@ function timeline_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-timeline_date-field_timeline_media_link'
+  // Exported field_instance: 'node-timeline_date-field_timeline_media_link'.
   $field_instances['node-timeline_date-field_timeline_media_link'] = array(
     'bundle' => 'timeline_date',
     'default_value' => NULL,
@@ -310,6 +310,7 @@ function timeline_field_default_field_instances() {
       ),
       'enable_tokens' => 1,
       'title' => 'none',
+      'title_label_use_field_label' => FALSE,
       'title_maxlength' => 128,
       'title_value' => '',
       'url' => 0,
@@ -325,7 +326,7 @@ function timeline_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-timeline_date-og_group_ref'
+  // Exported field_instance: 'node-timeline_date-og_group_ref'.
   $field_instances['node-timeline_date-og_group_ref'] = array(
     'bundle' => 'timeline_date',
     'default_value' => NULL,

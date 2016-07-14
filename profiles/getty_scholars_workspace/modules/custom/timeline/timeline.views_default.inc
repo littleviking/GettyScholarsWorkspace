@@ -32,32 +32,27 @@ function timeline_views_default_views() {
     'general' => array(
       'allow_secondary' => 0,
       'secondary_label' => 'Advanced options',
+      'collapsible_label' => NULL,
+      'combine_rewrite' => NULL,
+      'reset_label' => NULL,
     ),
+    'secondary_label' => NULL,
+    'collapsible_label' => NULL,
+    'combine_rewrite' => NULL,
+    'reset_label' => NULL,
   );
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
   $handler->display->display_options['style_plugin'] = 'timelinejs';
-  $handler->display->display_options['style_options']['timeline_theme'] = array(
-    'height' => '600',
-    'height_unit' => '0',
-  );
-  $handler->display->display_options['style_options']['timeline_fields'] = array(
-    'headline' => 'title',
-    'bodytext' => 'body',
-    'date' => 'field_timeline_dates',
-    'media' => 'field_timeline_media_image',
-    'credit' => '0',
-    'caption' => '0',
-    'tag' => '0',
-  );
-  $handler->display->display_options['style_options']['timeline_config'] = array(
-    'link_text_enabled' => 0,
-    'link_text' => '',
-    'strip_tags' => '0',
-    'hash_bookmark' => '0',
-    'start_at_end' => '0',
-    'start_zoom_adjust' => '1',
-  );
+  $handler->display->display_options['style_options']['timeline_theme']['height'] = '600';
+  $handler->display->display_options['style_options']['timeline_fields']['caption'] = 'field_timeline_caption_text';
+  $handler->display->display_options['style_options']['timeline_fields']['credit'] = 'field_timeline_credit_text';
+  $handler->display->display_options['style_options']['timeline_fields']['media'] = 'field_timeline_media_image';
+  $handler->display->display_options['style_options']['timeline_fields']['date'] = 'field_timeline_dates';
+  $handler->display->display_options['style_options']['timeline_fields']['bodytext'] = 'body';
+  $handler->display->display_options['style_options']['timeline_fields']['headline'] = 'title';
+  $handler->display->display_options['style_options']['timeline_config']['hash_bookmark'] = '1';
+  $handler->display->display_options['style_options']['timeline_config']['start_zoom_adjust'] = '1';
   /* No results behavior: Global: Text area */
   $handler->display->display_options['empty']['area']['id'] = 'area';
   $handler->display->display_options['empty']['area']['table'] = 'views';
@@ -96,6 +91,12 @@ function timeline_views_default_views() {
   $handler->display->display_options['fields']['field_timeline_media_image']['id'] = 'field_timeline_media_image';
   $handler->display->display_options['fields']['field_timeline_media_image']['table'] = 'field_data_field_timeline_media_image';
   $handler->display->display_options['fields']['field_timeline_media_image']['field'] = 'field_timeline_media_image';
+  $handler->display->display_options['fields']['field_timeline_media_image']['click_sort_column'] = 'fid';
+  $handler->display->display_options['fields']['field_timeline_media_image']['settings'] = array(
+    'image_style' => 'large',
+    'image_link' => '',
+    'field_formatter_class' => '',
+  );
   /* Field: Content: Media Link */
   $handler->display->display_options['fields']['field_timeline_media_link']['id'] = 'field_timeline_media_link';
   $handler->display->display_options['fields']['field_timeline_media_link']['table'] = 'field_data_field_timeline_media_link';
@@ -110,6 +111,13 @@ function timeline_views_default_views() {
   $handler->display->display_options['fields']['body']['table'] = 'field_data_body';
   $handler->display->display_options['fields']['body']['field'] = 'body';
   $handler->display->display_options['fields']['body']['type'] = 'text_plain';
+  /* Field: Content: Credit Text */
+  $handler->display->display_options['fields']['field_timeline_credit_text']['id'] = 'field_timeline_credit_text';
+  $handler->display->display_options['fields']['field_timeline_credit_text']['table'] = 'field_data_field_timeline_credit_text';
+  $handler->display->display_options['fields']['field_timeline_credit_text']['field'] = 'field_timeline_credit_text';
+  $handler->display->display_options['fields']['field_timeline_credit_text']['settings'] = array(
+    'field_formatter_class' => '',
+  );
   /* Contextual filter: Field: Groups audience (og_group_ref) */
   $handler->display->display_options['arguments']['og_group_ref_target_id']['id'] = 'og_group_ref_target_id';
   $handler->display->display_options['arguments']['og_group_ref_target_id']['table'] = 'og_membership';

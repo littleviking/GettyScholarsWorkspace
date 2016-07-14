@@ -79,7 +79,7 @@ libraries[ckeditor_footnotes][download][url] = "profiles/getty_scholars_workspac
 ; ColorBox
 libraries[colorbox][directory_name] = "colorbox"
 libraries[colorbox][download][type] = "get"
-libraries[colorbox][download][url] = "https://github.com/jackmoore/colorbox/archive/1.4.15.zip"
+libraries[colorbox][download][url] = "https://github.com/jackmoore/colorbox/archive/1.x.zip"
 
 ; Flexslider
 libraries[flexslider][directory_name] = "flexslider"
@@ -94,5 +94,5 @@ libraries[openseadragon][download][url] = "https://github.com/openseadragon/open
 ; Views TimelineJS
 libraries[timeline][directory_name] = "timeline"
 libraries[timeline][download][type] = "get"
-libraries[timeline][download][url] = "https://github.com/NUKnightLab/TimelineJS/archive/v2.17.zip"
+libraries[timeline][download][url] = "https://github.com/NUKnightLab/TimelineJS/archive/2.36.0.zip"
 

@@ -76,5 +76,5 @@ function gettysw_ltcz_display_file($fid, $nid) {
     $gid = NULL;
   }
 
-  return theme('gettysw_ltcz_cropzoom_image', array('path' => $full_url, 'file' => $file, 'width' => $file->image_dimensions['width'], 'height' => $file->image_dimensions['height'], 'nid' => $nid, 'gid' => $gid)); 
+  return theme('gettysw_ltcz_cropzoom_image', array('path' => $full_url, 'file' => $file, 'width' => $file->width, 'height' => $file->height, 'nid' => $nid, 'gid' => $gid)); 
 }
