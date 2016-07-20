@@ -89,4 +89,3 @@ features[variable][] = node_preview_bibliography
 features[variable][] = node_submitted_bibliography
 features[views_view][] = bibliography
 features[views_view][] = bibliography_reference
-mtime = 1450486234

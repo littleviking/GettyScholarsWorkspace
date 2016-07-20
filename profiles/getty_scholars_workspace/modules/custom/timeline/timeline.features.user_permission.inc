@@ -15,6 +15,7 @@ function timeline_user_default_permissions() {
     'name' => 'create timeline_date content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );
@@ -51,6 +52,7 @@ function timeline_user_default_permissions() {
     'name' => 'edit own timeline_date content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );

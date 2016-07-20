@@ -10,7 +10,8 @@
 function bibliography_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'field_collection_item-field_biblio_extra_data-field_biblio_extra_key'
+  // Exported field_instance:
+  // 'field_collection_item-field_biblio_extra_data-field_biblio_extra_key'.
   $field_instances['field_collection_item-field_biblio_extra_data-field_biblio_extra_key'] = array(
     'bundle' => 'field_biblio_extra_data',
     'default_value' => NULL,
@@ -46,7 +47,8 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'field_collection_item-field_biblio_extra_data-field_biblio_extra_value'
+  // Exported field_instance:
+  // 'field_collection_item-field_biblio_extra_data-field_biblio_extra_value'.
   $field_instances['field_collection_item-field_biblio_extra_data-field_biblio_extra_value'] = array(
     'bundle' => 'field_biblio_extra_data',
     'default_value' => NULL,
@@ -82,7 +84,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_author_first_name'
+  // Exported field_instance: 'node-bibliography-field_author_first_name'.
   $field_instances['node-bibliography-field_author_first_name'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -127,7 +129,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_author_last_name'
+  // Exported field_instance: 'node-bibliography-field_author_last_name'.
   $field_instances['node-bibliography-field_author_last_name'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -172,7 +174,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_date'
+  // Exported field_instance: 'node-bibliography-field_biblio_date'.
   $field_instances['node-bibliography-field_biblio_date'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -217,7 +219,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_edition'
+  // Exported field_instance: 'node-bibliography-field_biblio_edition'.
   $field_instances['node-bibliography-field_biblio_edition'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -259,7 +261,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_extra_data'
+  // Exported field_instance: 'node-bibliography-field_biblio_extra_data'.
   $field_instances['node-bibliography-field_biblio_extra_data'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -308,7 +310,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_isbn'
+  // Exported field_instance: 'node-bibliography-field_biblio_isbn'.
   $field_instances['node-bibliography-field_biblio_isbn'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -350,7 +352,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_publisher'
+  // Exported field_instance: 'node-bibliography-field_biblio_publisher'.
   $field_instances['node-bibliography-field_biblio_publisher'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -395,7 +397,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_short_title'
+  // Exported field_instance: 'node-bibliography-field_biblio_short_title'.
   $field_instances['node-bibliography-field_biblio_short_title'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -437,7 +439,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_type'
+  // Exported field_instance: 'node-bibliography-field_biblio_type'.
   $field_instances['node-bibliography-field_biblio_type'] = array(
     'bundle' => 'bibliography',
     'default_value' => array(
@@ -480,7 +482,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_url'
+  // Exported field_instance: 'node-bibliography-field_biblio_url'.
   $field_instances['node-bibliography-field_biblio_url'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -522,7 +524,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_biblio_volume'
+  // Exported field_instance: 'node-bibliography-field_biblio_volume'.
   $field_instances['node-bibliography-field_biblio_volume'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -564,7 +566,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_bibliography_document'
+  // Exported field_instance: 'node-bibliography-field_bibliography_document'.
   $field_instances['node-bibliography-field_bibliography_document'] = array(
     'bundle' => 'bibliography',
     'deleted' => 0,
@@ -617,7 +619,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_publisher_location'
+  // Exported field_instance: 'node-bibliography-field_publisher_location'.
   $field_instances['node-bibliography-field_publisher_location'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -662,7 +664,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_url'
+  // Exported field_instance: 'node-bibliography-field_url'.
   $field_instances['node-bibliography-field_url'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -704,7 +706,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-field_url_type'
+  // Exported field_instance: 'node-bibliography-field_url_type'.
   $field_instances['node-bibliography-field_url_type'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,
@@ -752,7 +754,7 @@ function bibliography_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-bibliography-og_group_ref'
+  // Exported field_instance: 'node-bibliography-og_group_ref'.
   $field_instances['node-bibliography-og_group_ref'] = array(
     'bundle' => 'bibliography',
     'default_value' => NULL,

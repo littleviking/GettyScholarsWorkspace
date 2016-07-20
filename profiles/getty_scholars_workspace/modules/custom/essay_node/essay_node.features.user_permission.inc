@@ -15,6 +15,7 @@ function essay_node_user_default_permissions() {
     'name' => 'create essay content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );
@@ -51,6 +52,7 @@ function essay_node_user_default_permissions() {
     'name' => 'edit own essay content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );

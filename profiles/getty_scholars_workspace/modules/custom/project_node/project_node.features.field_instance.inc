@@ -10,7 +10,7 @@
 function project_node_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-project-body'
+  // Exported field_instance: 'node-project-body'.
   $field_instances['node-project-body'] = array(
     'bundle' => 'project',
     'default_value' => NULL,
@@ -58,7 +58,7 @@ function project_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-project-field_image'
+  // Exported field_instance: 'node-project-field_image'.
   $field_instances['node-project-field_image'] = array(
     'bundle' => 'project',
     'deleted' => 0,
@@ -123,7 +123,7 @@ function project_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-project-group_access'
+  // Exported field_instance: 'node-project-group_access'.
   $field_instances['node-project-group_access'] = array(
     'bundle' => 'project',
     'default_value' => array(
@@ -176,7 +176,7 @@ function project_node_field_default_field_instances() {
     'widget_type' => 'options_select',
   );
 
-  // Exported field_instance: 'node-project-group_group'
+  // Exported field_instance: 'node-project-group_group'.
   $field_instances['node-project-group_group'] = array(
     'bundle' => 'project',
     'default_value' => array(

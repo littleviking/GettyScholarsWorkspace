@@ -12,4 +12,3 @@ features[features_api][] = api:2
 features[image][] = lighttable_main
 features[image][] = lighttable_thumb
 features[views_view][] = project_images
-mtime = 1450395982

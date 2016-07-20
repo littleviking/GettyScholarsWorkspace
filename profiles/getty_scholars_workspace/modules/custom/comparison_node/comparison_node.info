@@ -47,4 +47,3 @@ features[variable][] = node_options_comparison
 features[variable][] = node_preview_comparison
 features[variable][] = node_submitted_comparison
 features[views_view][] = comparisons
-mtime = 1450466790

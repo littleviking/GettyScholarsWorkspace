@@ -15,6 +15,7 @@ function bibliography_user_default_permissions() {
     'name' => 'create bibliography content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );
@@ -60,6 +61,7 @@ function bibliography_user_default_permissions() {
     'name' => 'edit own bibliography content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );

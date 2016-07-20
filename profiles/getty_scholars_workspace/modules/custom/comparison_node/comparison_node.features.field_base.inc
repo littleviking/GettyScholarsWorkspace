@@ -10,21 +10,13 @@
 function comparison_node_field_default_field_bases() {
   $field_bases = array();
 
-  // Exported field_base: 'field_image_references'
+  // Exported field_base: 'field_image_references'.
   $field_bases['field_image_references'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_image_references',
-    'foreign keys' => array(
-      'file_managed' => array(
-        'columns' => array(
-          'target_id' => 'fid',
-        ),
-        'table' => 'file_managed',
-      ),
-    ),
     'indexes' => array(
       'target_id' => array(
         0 => 'target_id',

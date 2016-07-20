@@ -10,7 +10,7 @@
 function page_node_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-page-body'
+  // Exported field_instance: 'node-page-body'.
   $field_instances['node-page-body'] = array(
     'bundle' => 'page',
     'default_value' => NULL,
@@ -57,7 +57,7 @@ function page_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-page-og_group_ref'
+  // Exported field_instance: 'node-page-og_group_ref'.
   $field_instances['node-page-og_group_ref'] = array(
     'bundle' => 'page',
     'default_value' => NULL,

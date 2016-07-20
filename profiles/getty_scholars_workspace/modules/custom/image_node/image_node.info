@@ -65,4 +65,3 @@ features[variable][] = node_options_image
 features[variable][] = node_preview_image
 features[variable][] = node_submitted_image
 features[views_view][] = images
-mtime = 1450481837

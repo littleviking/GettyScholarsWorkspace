@@ -10,14 +10,13 @@
 function project_dashboard_field_default_field_bases() {
   $field_bases = array();
 
-  // Exported field_base: 'group_content_access'
+  // Exported field_base: 'group_content_access'.
   $field_bases['group_content_access'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'group_content_access',
-    'foreign keys' => array(),
     'indexes' => array(
       'value' => array(
         0 => 'value',
@@ -38,21 +37,13 @@ function project_dashboard_field_default_field_bases() {
     'type' => 'list_integer',
   );
 
-  // Exported field_base: 'taxonomy_forums'
+  // Exported field_base: 'taxonomy_forums'.
   $field_bases['taxonomy_forums'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'taxonomy_forums',
-    'foreign keys' => array(
-      'tid' => array(
-        'columns' => array(
-          'tid' => 'tid',
-        ),
-        'table' => 'taxonomy_term_data',
-      ),
-    ),
     'indexes' => array(
       'tid' => array(
         0 => 'tid',

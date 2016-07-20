@@ -15,6 +15,7 @@ function comparison_node_user_default_permissions() {
     'name' => 'create comparison content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );
@@ -51,6 +52,7 @@ function comparison_node_user_default_permissions() {
     'name' => 'edit own comparison content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );

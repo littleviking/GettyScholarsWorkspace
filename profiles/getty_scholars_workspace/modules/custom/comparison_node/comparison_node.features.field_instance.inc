@@ -10,7 +10,7 @@
 function comparison_node_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-comparison-body'
+  // Exported field_instance: 'node-comparison-body'.
   $field_instances['node-comparison-body'] = array(
     'bundle' => 'comparison',
     'default_value' => NULL,
@@ -57,7 +57,7 @@ function comparison_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-comparison-field_image_references'
+  // Exported field_instance: 'node-comparison-field_image_references'.
   $field_instances['node-comparison-field_image_references'] = array(
     'bundle' => 'comparison',
     'default_value' => NULL,
@@ -98,7 +98,7 @@ function comparison_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-comparison-field_tags'
+  // Exported field_instance: 'node-comparison-field_tags'.
   $field_instances['node-comparison-field_tags'] = array(
     'bundle' => 'comparison',
     'default_value' => NULL,
@@ -137,7 +137,7 @@ function comparison_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-comparison-og_group_ref'
+  // Exported field_instance: 'node-comparison-og_group_ref'.
   $field_instances['node-comparison-og_group_ref'] = array(
     'bundle' => 'comparison',
     'default_value' => NULL,

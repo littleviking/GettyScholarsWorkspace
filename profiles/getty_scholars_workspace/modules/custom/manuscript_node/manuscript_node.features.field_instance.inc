@@ -10,7 +10,7 @@
 function manuscript_node_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-manuscript-body'
+  // Exported field_instance: 'node-manuscript-body'.
   $field_instances['node-manuscript-body'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -58,7 +58,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_english'
+  // Exported field_instance: 'node-manuscript-field_english'.
   $field_instances['node-manuscript-field_english'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -100,7 +100,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_facsimile'
+  // Exported field_instance: 'node-manuscript-field_facsimile'.
   $field_instances['node-manuscript-field_facsimile'] = array(
     'bundle' => 'manuscript',
     'deleted' => 0,
@@ -162,7 +162,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_french'
+  // Exported field_instance: 'node-manuscript-field_french'.
   $field_instances['node-manuscript-field_french'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -204,7 +204,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_german'
+  // Exported field_instance: 'node-manuscript-field_german'.
   $field_instances['node-manuscript-field_german'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -246,7 +246,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_hebrew'
+  // Exported field_instance: 'node-manuscript-field_hebrew'.
   $field_instances['node-manuscript-field_hebrew'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -288,7 +288,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_italian'
+  // Exported field_instance: 'node-manuscript-field_italian'.
   $field_instances['node-manuscript-field_italian'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -330,7 +330,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_latin'
+  // Exported field_instance: 'node-manuscript-field_latin'.
   $field_instances['node-manuscript-field_latin'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -372,7 +372,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_spanish'
+  // Exported field_instance: 'node-manuscript-field_spanish'.
   $field_instances['node-manuscript-field_spanish'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -414,7 +414,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_tags'
+  // Exported field_instance: 'node-manuscript-field_tags'.
   $field_instances['node-manuscript-field_tags'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -453,7 +453,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-field_transcription'
+  // Exported field_instance: 'node-manuscript-field_transcription'.
   $field_instances['node-manuscript-field_transcription'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,
@@ -499,7 +499,7 @@ function manuscript_node_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-manuscript-og_group_ref'
+  // Exported field_instance: 'node-manuscript-og_group_ref'.
   $field_instances['node-manuscript-og_group_ref'] = array(
     'bundle' => 'manuscript',
     'default_value' => NULL,

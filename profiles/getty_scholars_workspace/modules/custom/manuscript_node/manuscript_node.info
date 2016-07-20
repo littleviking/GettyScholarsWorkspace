@@ -94,4 +94,3 @@ features[variable][] = node_options_manuscript
 features[variable][] = node_preview_manuscript
 features[variable][] = node_submitted_manuscript
 features[views_view][] = transcriptions
-mtime = 1450719974

@@ -19,4 +19,3 @@ features[user_permission][] = update own image annotations
 features[user_permission][] = update own text annotations
 features[user_permission][] = view image annotations
 features[user_permission][] = view text annotations
-mtime = 1450719974

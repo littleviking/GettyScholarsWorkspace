@@ -8,7 +8,7 @@
  * Implements hook_field_group_info().
  */
 function manuscript_node_field_group_info() {
-  $export = array();
+  $field_groups = array();
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -35,7 +35,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_english|node|manuscript|default'] = $field_group;
+  $field_groups['group_english|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -63,7 +63,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_english|node|manuscript|form'] = $field_group;
+  $field_groups['group_english|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -92,7 +92,7 @@ function manuscript_node_field_group_info() {
       'formatter' => 'closed',
     ),
   );
-  $export['group_facsimile|node|manuscript|default'] = $field_group;
+  $field_groups['group_facsimile|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -122,7 +122,7 @@ function manuscript_node_field_group_info() {
       'formatter' => 'closed',
     ),
   );
-  $export['group_facsimile|node|manuscript|form'] = $field_group;
+  $field_groups['group_facsimile|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -149,7 +149,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_french|node|manuscript|default'] = $field_group;
+  $field_groups['group_french|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -177,7 +177,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_french|node|manuscript|form'] = $field_group;
+  $field_groups['group_french|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -204,7 +204,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_german|node|manuscript|default'] = $field_group;
+  $field_groups['group_german|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -232,7 +232,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_german|node|manuscript|form'] = $field_group;
+  $field_groups['group_german|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -259,7 +259,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_hebrew|node|manuscript|default'] = $field_group;
+  $field_groups['group_hebrew|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -287,7 +287,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_hebrew|node|manuscript|form'] = $field_group;
+  $field_groups['group_hebrew|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -314,7 +314,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_italian|node|manuscript|default'] = $field_group;
+  $field_groups['group_italian|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -342,7 +342,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_italian|node|manuscript|form'] = $field_group;
+  $field_groups['group_italian|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -369,7 +369,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_latin|node|manuscript|default'] = $field_group;
+  $field_groups['group_latin|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -397,7 +397,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_latin|node|manuscript|form'] = $field_group;
+  $field_groups['group_latin|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -424,7 +424,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_spanish|node|manuscript|default'] = $field_group;
+  $field_groups['group_spanish|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -452,7 +452,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_spanish|node|manuscript|form'] = $field_group;
+  $field_groups['group_spanish|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -486,7 +486,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_transcribe_translate|node|manuscript|default'] = $field_group;
+  $field_groups['group_transcribe_translate|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -520,7 +520,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_transcribe_translate|node|manuscript|form'] = $field_group;
+  $field_groups['group_transcribe_translate|node|manuscript|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -547,7 +547,7 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_transcription|node|manuscript|default'] = $field_group;
+  $field_groups['group_transcription|node|manuscript|default'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -575,7 +575,20 @@ function manuscript_node_field_group_info() {
       ),
     ),
   );
-  $export['group_transcription|node|manuscript|form'] = $field_group;
+  $field_groups['group_transcription|node|manuscript|form'] = $field_group;
 
-  return $export;
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('English');
+  t('Facsimile');
+  t('French');
+  t('German');
+  t('Hebrew');
+  t('Italian');
+  t('Latin');
+  t('Spanish');
+  t('Transcribe & Translate');
+  t('Transcription');
+
+  return $field_groups;
 }

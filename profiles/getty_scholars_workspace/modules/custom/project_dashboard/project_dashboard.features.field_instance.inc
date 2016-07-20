@@ -10,7 +10,7 @@
 function project_dashboard_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-forum-body'
+  // Exported field_instance: 'node-forum-body'.
   $field_instances['node-forum-body'] = array(
     'bundle' => 'forum',
     'default_value' => NULL,
@@ -57,7 +57,7 @@ function project_dashboard_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-forum-group_content_access'
+  // Exported field_instance: 'node-forum-group_content_access'.
   $field_instances['node-forum-group_content_access'] = array(
     'bundle' => 'forum',
     'default_value' => array(
@@ -110,7 +110,7 @@ function project_dashboard_field_default_field_instances() {
     'widget_type' => 'options_select',
   );
 
-  // Exported field_instance: 'node-forum-og_group_ref'
+  // Exported field_instance: 'node-forum-og_group_ref'.
   $field_instances['node-forum-og_group_ref'] = array(
     'bundle' => 'forum',
     'default_value' => NULL,
@@ -171,7 +171,7 @@ function project_dashboard_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-forum-taxonomy_forums'
+  // Exported field_instance: 'node-forum-taxonomy_forums'.
   $field_instances['node-forum-taxonomy_forums'] = array(
     'bundle' => 'forum',
     'default_value' => NULL,
@@ -212,7 +212,7 @@ function project_dashboard_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'taxonomy_term-forums-og_group_ref'
+  // Exported field_instance: 'taxonomy_term-forums-og_group_ref'.
   $field_instances['taxonomy_term-forums-og_group_ref'] = array(
     'bundle' => 'forums',
     'default_value' => NULL,

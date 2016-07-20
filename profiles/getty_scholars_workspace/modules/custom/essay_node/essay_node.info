@@ -47,4 +47,3 @@ features[variable][] = node_options_essay
 features[variable][] = node_preview_essay
 features[variable][] = node_submitted_essay
 features[views_view][] = essays
-mtime = 1450473805

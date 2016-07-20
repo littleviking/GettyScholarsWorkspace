@@ -10,7 +10,7 @@
 function shared_field_bases_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'taxonomy_term-tags-og_group_ref'
+  // Exported field_instance: 'taxonomy_term-tags-og_group_ref'.
   $field_instances['taxonomy_term-tags-og_group_ref'] = array(
     'bundle' => 'tags',
     'default_value' => NULL,

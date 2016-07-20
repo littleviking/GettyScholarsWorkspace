@@ -15,6 +15,7 @@ function manuscript_node_user_default_permissions() {
     'name' => 'create manuscript content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );
@@ -33,6 +34,7 @@ function manuscript_node_user_default_permissions() {
     'name' => 'delete own manuscript content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );
@@ -51,6 +53,7 @@ function manuscript_node_user_default_permissions() {
     'name' => 'edit own manuscript content',
     'roles' => array(
       'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
     ),
     'module' => 'node',
   );

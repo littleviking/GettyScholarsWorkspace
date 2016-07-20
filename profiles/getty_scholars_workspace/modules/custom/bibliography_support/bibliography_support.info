@@ -18,4 +18,3 @@ features[variable][] = getty_biblio_wrapper_ris
 files[] = classes/bibliography_support.biblio.class.php
 files[] = classes/bibliography_support.ris.class.php
 files[] = classes/bibliography_support.rdf.class.php
-mtime = 1450719973

@@ -2,7 +2,6 @@ name = Getty SW WYSIWYG
 description = Profiles and configurations for WYSIWYG
 core = 7.x
 package = Getty Scholars' Workspace
-
 dependencies[] = features
 dependencies[] = filter
 dependencies[] = footnotes
